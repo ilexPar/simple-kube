@@ -9,9 +9,10 @@ import (
 )
 
 type Ingress struct {
-	Name   string           `sm:"metadata.name"`
-	Domain string           `sm:"spec.rules[0].host"`
-	Paths  []IngressPathDef `sm:"spec.rules[0].http.paths"`
+	Name   string            `sm:"metadata.name"`
+	Domain string            `sm:"spec.rules[0].host"`
+	Paths  []IngressPathDef  `sm:"spec.rules[0].http.paths"`
+	Labels map[string]string `sm:"metadata.labels"`
 }
 
 type IngressPathDef struct {
