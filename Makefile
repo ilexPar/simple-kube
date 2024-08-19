@@ -11,7 +11,7 @@ test::
 test-cov::
 	@gotestsum -f dots-v2 -- -coverprofile cover.out -coverpkg=./pkg/... ./tests/... 
 
-test-html:: test-pretty
+test-html:: test-cov
 	@go tool cover -html=cover.out
 
 test-cov-print:: test-cov
