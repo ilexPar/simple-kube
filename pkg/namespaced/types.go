@@ -12,7 +12,7 @@ type NamespacedResourceMethods interface {
 }
 
 type NamespacedResourcesConstrain interface {
-	resources.Deployment | resources.Service | resources.Job | resources.CronJob | resources.ConfigMap | resources.Ingress
+	resources.Deployment | resources.Service | resources.Job | resources.CronJob | resources.ConfigMap | resources.Ingress | resources.HPA
 }
 
 type NamespacedResources interface {
@@ -27,6 +27,7 @@ type QueryNamespace interface {
 	CronJob() NamespacedAction[resources.CronJob]
 	ConfigMap() NamespacedAction[resources.ConfigMap]
 	Ingress() NamespacedAction[resources.Ingress]
+	HPA() NamespacedAction[resources.HPA]
 }
 
 type NamespacedAction[T NamespacedResources] interface {

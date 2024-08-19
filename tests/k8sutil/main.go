@@ -156,6 +156,8 @@ func resolveInformerByDef(def interface{}, i informers.SharedInformerFactory) ca
 		return i.Batch().V1().CronJobs().Informer()
 	case sknsres.Ingress:
 		return i.Networking().V1().Ingresses().Informer()
+	case sknsres.HPA:
+		return i.Autoscaling().V2().HorizontalPodAutoscalers().Informer()
 	default:
 		t := reflect.ValueOf(def).Type().Name()
 		err := fmt.Sprintf("no case provided for %s", t)

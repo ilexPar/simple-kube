@@ -145,3 +145,12 @@ func (n *Query) Ingress() NamespacedAction[skns.Ingress] {
 		n.getResourceAPI(res),
 	)
 }
+
+func (n *Query) HPA() NamespacedAction[skns.HPA] {
+	res := skns.HPA{}
+	return NewAction(
+		n.namespace,
+		res,
+		n.getResourceAPI(res),
+	)
+}
