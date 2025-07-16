@@ -156,6 +156,11 @@ func TestHPAGet(t *testing.T) {
 		Spec: scaling.HorizontalPodAutoscalerSpec{
 			MinReplicas: &minReplicas,
 			MaxReplicas: 10,
+			ScaleTargetRef: scaling.CrossVersionObjectReference{
+				Name:       "my-deployment",
+				Kind:       "Deployment",
+				APIVersion: "apps/v1",
+			},
 			Metrics: []scaling.MetricSpec{{
 				Type: "Resource",
 				Resource: &scaling.ResourceMetricSource{
@@ -172,6 +177,11 @@ func TestHPAGet(t *testing.T) {
 		Name: "my-deployment",
 		Min:  1,
 		Max:  10,
+		Target: skres.HPATarget{
+			Name:       "my-deployment",
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
 		Metrics: []skres.HPAMetric{{
 			Type: "Resource",
 			Resource: skres.HPAResourceMetric{
