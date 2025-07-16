@@ -87,7 +87,27 @@ type Query struct {
 func (n *Query) getResourceAPI(
 	res NamespacedResourceMethods,
 ) skns.NamespacedResourceAPI {
-	api := res.API()
+	var api skns.NamespacedResourceAPI
+
+	switch res.(type) {
+	case skns.Deployment:
+		api = &skns.DeploymentAPI{}
+	case skns.Service:
+		api = &skns.ServiceAPI{}
+	case skns.Job:
+		api = &skns.JobAPI{}
+	case skns.CronJob:
+		api = &skns.CronJobAPI{}
+	case skns.ConfigMap:
+		api = &skns.ConfigMapAPI{}
+	case skns.Ingress:
+		api = &skns.IngressAPI{}
+	case skns.HPA:
+		api = &skns.HPAapi{}
+	default:
+		panic("cannot resolve Kube API")
+	}
+
 	api.Config(n.ctx, n.client)
 	return api
 }

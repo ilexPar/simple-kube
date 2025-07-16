@@ -7,8 +7,6 @@ import (
 
 type NamespacedResourceMethods interface {
 	base.ResourceInterface
-
-	API() resources.NamespacedResourceAPI
 }
 
 type NamespacedResourcesConstrain interface {
