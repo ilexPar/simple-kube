@@ -2,7 +2,6 @@ package resources
 
 import (
 	"github.com/ilexPar/simple-kube/pkg/base"
-	sm "github.com/ilexPar/struct-marshal/pkg"
 	scaling "k8s.io/api/autoscaling/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -32,59 +31,65 @@ type HPAResourceMetric struct {
 	Utilization int                      `sm:"target.averageUtilization"`
 }
 
-func (h HPA) API() NamespacedResourceAPI {
-	return &HPAapi{}
-}
-
-func (h HPA) Dump(from interface{}) (interface{}, error) {
-	res := &scaling.HorizontalPodAutoscaler{}
-	err := sm.Marshal(from, res)
-	return res, err
-}
-
-func (h HPA) Load(from, into interface{}) error {
-	return sm.Unmarshal(from, into)
-}
-
-type HPAapi struct {
+type HPAapi[R base.KubernetesResources] struct {
 	base.KubeAPI
 }
 
-func (h *HPAapi) Get(name, namespace string) (interface{}, error) {
+func (h *HPAapi[R]) Get(name, namespace string) (*R, error) {
 	res, err := h.Client.AutoscalingV2().
 		HorizontalPodAutoscalers(namespace).
 		Get(h.Context, name, metav1.GetOptions{})
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := base.Cast[*R](res)
+	return result, err
 }
 
-func (h *HPAapi) Create(namespace string, obj interface{}) error {
-	res := obj.(*scaling.HorizontalPodAutoscaler)
-	_, err := h.Client.AutoscalingV2().
+func (h *HPAapi[R]) Create(namespace string, obj *R) error {
+	res, err := base.Cast[*scaling.HorizontalPodAutoscaler](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = h.Client.AutoscalingV2().
 		HorizontalPodAutoscalers(namespace).
 		Create(h.Context, res, metav1.CreateOptions{})
 	return err
 }
 
-func (h *HPAapi) Update(namespace string, obj interface{}) error {
-	res := obj.(*scaling.HorizontalPodAutoscaler)
-	_, err := h.Client.AutoscalingV2().
+func (h *HPAapi[R]) Update(namespace string, obj *R) error {
+	res, err := base.Cast[*scaling.HorizontalPodAutoscaler](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = h.Client.AutoscalingV2().
 		HorizontalPodAutoscalers(namespace).
 		Update(h.Context, res, metav1.UpdateOptions{})
 	return err
 }
 
-func (h *HPAapi) List(namespace string) ([]interface{}, error) {
-	var res []interface{}
+func (h *HPAapi[R]) List(namespace string) ([]R, error) {
+	res := []R{}
 	list, err := h.Client.AutoscalingV2().
 		HorizontalPodAutoscalers(namespace).
 		List(h.Context, h.Opts.List)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, v := range list.Items {
-		res = append(res, v)
+		item, err := base.Cast[R](v)
+		if err == nil {
+			res = append(res, item)
+		}
 	}
 	return res, err
 }
 
-func (h *HPAapi) Delete(name, namespace string) error {
+func (h *HPAapi[R]) Delete(name, namespace string) error {
 	return h.Client.AutoscalingV2().
 		HorizontalPodAutoscalers(namespace).
 		Delete(h.Context, name, metav1.DeleteOptions{})

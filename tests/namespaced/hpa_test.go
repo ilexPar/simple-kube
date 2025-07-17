@@ -43,9 +43,8 @@ func TestHPACreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				HPA().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*scaling.HorizontalPodAutoscaler)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(hpa *scaling.HorizontalPodAutoscaler) error {
+					assert.Equal(t, new.Name, hpa.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -64,7 +63,7 @@ func TestHPACreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			HPA().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*scaling.HorizontalPodAutoscaler) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -114,9 +113,8 @@ func TestHPAUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				HPA().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*scaling.HorizontalPodAutoscaler)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(hpa *scaling.HorizontalPodAutoscaler) error {
+					assert.Equal(t, new.Name, hpa.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -135,7 +133,7 @@ func TestHPAUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			HPA().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*scaling.HorizontalPodAutoscaler) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -214,9 +212,8 @@ func TestHPAGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			HPA().
 			Get("my-deployment").
-			DataHandler(func(res interface{}) error {
-				deployment := res.(*scaling.HorizontalPodAutoscaler)
-				deployment.Spec.MaxReplicas = 11
+			DataHandler(func(hpa *scaling.HorizontalPodAutoscaler) error {
+				hpa.Spec.MaxReplicas = 11
 				return nil
 			})
 		result, err := query.Run()
@@ -228,7 +225,7 @@ func TestHPAGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			HPA().
 			Get("my-deployment").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*scaling.HorizontalPodAutoscaler) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()

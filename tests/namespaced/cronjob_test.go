@@ -49,9 +49,8 @@ func TestCronJobCreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				CronJob().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*batch.CronJob)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(res *batch.CronJob) error {
+					assert.Equal(t, new.Name, res.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -70,7 +69,7 @@ func TestCronJobCreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			CronJob().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(res *batch.CronJob) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -137,9 +136,8 @@ func TestCronJobUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				CronJob().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*batch.CronJob)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(res *batch.CronJob) error {
+					assert.Equal(t, new.Name, res.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -158,7 +156,7 @@ func TestCronJobUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			CronJob().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(res *batch.CronJob) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -225,8 +223,7 @@ func TestCronJobGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			CronJob().
 			Get("my-cron").
-			DataHandler(func(res interface{}) error {
-				cron := res.(*batch.CronJob)
+			DataHandler(func(cron *batch.CronJob) error {
 				cron.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image = "overrided"
 				return nil
 			})
@@ -239,7 +236,7 @@ func TestCronJobGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			CronJob().
 			Get("my-cron").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*batch.CronJob) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()

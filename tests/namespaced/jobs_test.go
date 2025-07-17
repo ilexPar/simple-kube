@@ -49,9 +49,8 @@ func TestJobCreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Job().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*batch.Job)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(job *batch.Job) error {
+					assert.Equal(t, new.Name, job.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -70,7 +69,7 @@ func TestJobCreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Job().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*batch.Job) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -131,9 +130,8 @@ func TestJobUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Job().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*batch.Job)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(job *batch.Job) error {
+					assert.Equal(t, new.Name, job.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -152,7 +150,7 @@ func TestJobUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Job().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*batch.Job) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -213,8 +211,7 @@ func TestJobGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Job().
 			Get("my-job").
-			DataHandler(func(res interface{}) error {
-				job := res.(*batch.Job)
+			DataHandler(func(job *batch.Job) error {
 				job.Spec.Template.Spec.Containers[0].Image = "overrided"
 				return nil
 			})
@@ -227,7 +224,7 @@ func TestJobGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Job().
 			Get("my-job").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*batch.Job) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()

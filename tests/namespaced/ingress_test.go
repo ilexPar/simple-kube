@@ -50,9 +50,8 @@ func TestIngressCreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Ingress().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*net.Ingress)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(ingress *net.Ingress) error {
+					assert.Equal(t, new.Name, ingress.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -71,7 +70,7 @@ func TestIngressCreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Ingress().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*net.Ingress) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -146,9 +145,8 @@ func TestIngressUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Ingress().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*net.Ingress)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(ingress *net.Ingress) error {
+					assert.Equal(t, new.Name, ingress.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -167,7 +165,7 @@ func TestIngressUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Ingress().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*net.Ingress) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -242,9 +240,8 @@ func TestIngressGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Ingress().
 			Get("my-ingress").
-			DataHandler(func(res interface{}) error {
-				svc := res.(*net.Ingress)
-				svc.Spec.Rules[0].Host = "overriden.com"
+			DataHandler(func(ingress *net.Ingress) error {
+				ingress.Spec.Rules[0].Host = "overriden.com"
 				return nil
 			})
 		result, err := query.Run()
@@ -256,7 +253,7 @@ func TestIngressGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Ingress().
 			Get("my-ingress").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*net.Ingress) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()

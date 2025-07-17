@@ -45,9 +45,8 @@ func TestConfigMapCreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				ConfigMap().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*api.ConfigMap)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(res *api.ConfigMap) error {
+					assert.Equal(t, new.Name, res.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -66,7 +65,7 @@ func TestConfigMapCreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			ConfigMap().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(res *api.ConfigMap) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -115,9 +114,8 @@ func TestConfigMapUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				ConfigMap().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*api.ConfigMap)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(res *api.ConfigMap) error {
+					assert.Equal(t, new.Name, res.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -136,7 +134,7 @@ func TestConfigMapUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			ConfigMap().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(res *api.ConfigMap) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -185,9 +183,8 @@ func TestConfigMapGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			ConfigMap().
 			Get("my-config").
-			DataHandler(func(res interface{}) error {
-				cmap := res.(*api.ConfigMap)
-				cmap.Data["key"] = "override" // override
+			DataHandler(func(res *api.ConfigMap) error {
+				res.Data["key"] = "override" // override
 				return nil
 			})
 		result, err := query.Run()
@@ -199,7 +196,7 @@ func TestConfigMapGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			ConfigMap().
 			Get("my-config").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(res *api.ConfigMap) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()

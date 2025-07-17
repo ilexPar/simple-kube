@@ -49,9 +49,8 @@ func TestDeploymentCreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Deployment().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*apps.Deployment)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(deployment *apps.Deployment) error {
+					assert.Equal(t, new.Name, deployment.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -70,7 +69,7 @@ func TestDeploymentCreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Deployment().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*apps.Deployment) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -131,9 +130,8 @@ func TestDeploymentUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Deployment().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*apps.Deployment)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(deployment *apps.Deployment) error {
+					assert.Equal(t, new.Name, deployment.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -152,7 +150,7 @@ func TestDeploymentUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Deployment().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*apps.Deployment) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -213,8 +211,7 @@ func TestDeploymentGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Deployment().
 			Get("my-deployment").
-			DataHandler(func(res interface{}) error {
-				deployment := res.(*apps.Deployment)
+			DataHandler(func(deployment *apps.Deployment) error {
 				deployment.Spec.Template.Spec.Containers[0].Image = "overrided"
 				return nil
 			})
@@ -227,7 +224,7 @@ func TestDeploymentGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Deployment().
 			Get("my-deployment").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*apps.Deployment) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()

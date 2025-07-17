@@ -46,9 +46,8 @@ func TestServiceCreate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Service().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*api.Service)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(svc *api.Service) error {
+					assert.Equal(t, new.Name, svc.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -67,7 +66,7 @@ func TestServiceCreate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Service().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*api.Service) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -124,9 +123,8 @@ func TestServiceUpdate(t *testing.T) {
 			query := client.NamespacedQuery("default").
 				Service().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*api.Service)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(svc *api.Service) error {
+					assert.Equal(t, new.Name, svc.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -145,7 +143,7 @@ func TestServiceUpdate(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Service().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*api.Service) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -202,8 +200,7 @@ func TestServiceGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Service().
 			Get("my-svc").
-			DataHandler(func(res interface{}) error {
-				svc := res.(*api.Service)
+			DataHandler(func(svc *api.Service) error {
 				svc.Spec.Ports[0].Port = 81 // override
 				return nil
 			})
@@ -216,7 +213,7 @@ func TestServiceGet(t *testing.T) {
 		query := client.NamespacedQuery("default").
 			Service().
 			Get("my-svc").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*api.Service) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()
