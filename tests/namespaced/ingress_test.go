@@ -17,6 +17,7 @@ import (
 )
 
 func TestIngressCreate(t *testing.T) {
+	client := sk.Client{}
 	new := skres.Ingress{
 		Name:   "my-ingress",
 		Domain: "example.com",
@@ -31,9 +32,9 @@ func TestIngressCreate(t *testing.T) {
 
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Ingress](t, kt.Create, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Ingress().
 				Create(new)
 			err := query.Run()
@@ -45,9 +46,9 @@ func TestIngressCreate(t *testing.T) {
 		kt.WithInformedClient[skres.Ingress](t, kt.Create, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Ingress().
 				Create(new).
 				DataHandler(func(ingress *net.Ingress) error {
@@ -65,9 +66,9 @@ func TestIngressCreate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset()
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Create(new).
 			DataHandler(func(*net.Ingress) error {
@@ -82,6 +83,7 @@ func TestIngressCreate(t *testing.T) {
 }
 
 func TestIngressUpdate(t *testing.T) {
+	client := sk.Client{}
 	old := &net.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-ingress",
@@ -125,9 +127,9 @@ func TestIngressUpdate(t *testing.T) {
 	}
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Ingress](t, kt.Update, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Ingress().
 				Update(new)
 
@@ -140,9 +142,9 @@ func TestIngressUpdate(t *testing.T) {
 		kt.WithInformedClient[skres.Ingress](t, kt.Update, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2 // kube fake clients with informers starts with 2 actions
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Ingress().
 				Update(new).
 				DataHandler(func(ingress *net.Ingress) error {
@@ -160,9 +162,9 @@ func TestIngressUpdate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(old)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Update(new).
 			DataHandler(func(*net.Ingress) error {
@@ -176,6 +178,7 @@ func TestIngressUpdate(t *testing.T) {
 }
 
 func TestIngressGet(t *testing.T) {
+	client := sk.Client{}
 	kubeSvc := &net.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-ingress",
@@ -217,10 +220,10 @@ func TestIngressGet(t *testing.T) {
 			},
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(kubeSvc))
+	client.Config(context.Background(), fake.NewSimpleClientset(kubeSvc))
 
 	t.Run("should return custom error when not found", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Get("not-found")
 		_, err := query.Run()
@@ -228,7 +231,7 @@ func TestIngressGet(t *testing.T) {
 		assert.Equal(t, skerr.ERROR_NOT_FOUND, err.Error())
 	})
 	t.Run("should return expected object", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Get("my-ingress")
 		result, err := query.Run()
@@ -237,7 +240,7 @@ func TestIngressGet(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 	t.Run("should run DataHandler callback", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Get("my-ingress").
 			DataHandler(func(ingress *net.Ingress) error {
@@ -250,7 +253,7 @@ func TestIngressGet(t *testing.T) {
 		assert.Equal(t, "overriden.com", result.Domain)
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Get("my-ingress").
 			DataHandler(func(*net.Ingress) error {
@@ -263,6 +266,7 @@ func TestIngressGet(t *testing.T) {
 }
 
 func TestIngressList(t *testing.T) {
+	client := sk.Client{}
 	igr1 := &net.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-ingress",
@@ -330,10 +334,10 @@ func TestIngressList(t *testing.T) {
 			},
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(igr1, igr2))
+	client.Config(context.Background(), fake.NewSimpleClientset(igr1, igr2))
 
 	t.Run("should return expected objects", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			List()
 		result, err := query.Run()
@@ -342,7 +346,7 @@ func TestIngressList(t *testing.T) {
 		assert.Equal(t, 2, len(result))
 	})
 	t.Run("should filter by label", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			List().
 			FilterByLabels(map[string]string{
@@ -356,6 +360,7 @@ func TestIngressList(t *testing.T) {
 }
 
 func TestIngressDelete(t *testing.T) {
+	client := sk.Client{}
 	dpl := &net.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-ingress",
@@ -388,9 +393,9 @@ func TestIngressDelete(t *testing.T) {
 	}
 	t.Run("should return no errors when calling delete on an object", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(dpl)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Ingress().
 			Delete("my-ingress")
 

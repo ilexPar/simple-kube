@@ -17,6 +17,7 @@ import (
 )
 
 func TestConfigMapCreate(t *testing.T) {
+	client := sk.Client{}
 	new := skres.ConfigMap{
 		Name: "my-config",
 		Data: map[string]string{
@@ -26,9 +27,9 @@ func TestConfigMapCreate(t *testing.T) {
 
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.ConfigMap](t, kt.Create, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				ConfigMap().
 				Create(new)
 			err := query.Run()
@@ -40,9 +41,9 @@ func TestConfigMapCreate(t *testing.T) {
 		kt.WithInformedClient[skres.ConfigMap](t, kt.Create, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				ConfigMap().
 				Create(new).
 				DataHandler(func(res *api.ConfigMap) error {
@@ -60,9 +61,9 @@ func TestConfigMapCreate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset()
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Create(new).
 			DataHandler(func(res *api.ConfigMap) error {
@@ -77,6 +78,7 @@ func TestConfigMapCreate(t *testing.T) {
 }
 
 func TestConfigMapUpdate(t *testing.T) {
+	client := sk.Client{}
 	old := &api.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-config",
@@ -94,9 +96,9 @@ func TestConfigMapUpdate(t *testing.T) {
 	}
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.ConfigMap](t, kt.Update, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				ConfigMap().
 				Update(new)
 
@@ -109,9 +111,9 @@ func TestConfigMapUpdate(t *testing.T) {
 		kt.WithInformedClient[skres.ConfigMap](t, kt.Update, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2 // kube fake clients with informers starts with 2 actions
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				ConfigMap().
 				Update(new).
 				DataHandler(func(res *api.ConfigMap) error {
@@ -129,9 +131,9 @@ func TestConfigMapUpdate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(old)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Update(new).
 			DataHandler(func(res *api.ConfigMap) error {
@@ -145,6 +147,7 @@ func TestConfigMapUpdate(t *testing.T) {
 }
 
 func TestConfigMapGet(t *testing.T) {
+	client := sk.Client{}
 	kubeSvc := &api.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-config",
@@ -160,10 +163,10 @@ func TestConfigMapGet(t *testing.T) {
 			"key": "value",
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(kubeSvc))
+	client.Config(context.Background(), fake.NewSimpleClientset(kubeSvc))
 
 	t.Run("should return custom error when not found", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Get("not-found")
 		_, err := query.Run()
@@ -171,7 +174,7 @@ func TestConfigMapGet(t *testing.T) {
 		assert.Equal(t, skerr.ERROR_NOT_FOUND, err.Error())
 	})
 	t.Run("should return expected object", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Get("my-config")
 		result, err := query.Run()
@@ -180,7 +183,7 @@ func TestConfigMapGet(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 	t.Run("should run DataHandler callback", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Get("my-config").
 			DataHandler(func(res *api.ConfigMap) error {
@@ -193,7 +196,7 @@ func TestConfigMapGet(t *testing.T) {
 		assert.Equal(t, "override", result.Data["key"])
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Get("my-config").
 			DataHandler(func(res *api.ConfigMap) error {
@@ -206,6 +209,7 @@ func TestConfigMapGet(t *testing.T) {
 }
 
 func TestConfigMapList(t *testing.T) {
+	client := sk.Client{}
 	cmap1 := &api.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-config",
@@ -231,10 +235,10 @@ func TestConfigMapList(t *testing.T) {
 			"key2": "different value",
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(cmap1, cmap2))
+	client.Config(context.Background(), fake.NewSimpleClientset(cmap1, cmap2))
 
 	t.Run("should return expected objects", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			List()
 		result, err := query.Run()
@@ -243,7 +247,7 @@ func TestConfigMapList(t *testing.T) {
 		assert.Equal(t, 2, len(result))
 	})
 	t.Run("should filter by label", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			List().
 			FilterByLabels(map[string]string{
@@ -257,6 +261,7 @@ func TestConfigMapList(t *testing.T) {
 }
 
 func TestConfigMapDelete(t *testing.T) {
+	client := sk.Client{}
 	dpl := &api.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-config",
@@ -272,9 +277,9 @@ func TestConfigMapDelete(t *testing.T) {
 	}
 	t.Run("should return no errors when calling delete on an object", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(dpl)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			ConfigMap().
 			Delete("my-config")
 

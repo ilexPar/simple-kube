@@ -18,6 +18,7 @@ import (
 )
 
 func TestJobCreate(t *testing.T) {
+	client := sk.Client{}
 	new := skres.Job{
 		Name: "my-job",
 		Containers: []skres.Container{
@@ -30,9 +31,9 @@ func TestJobCreate(t *testing.T) {
 
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Job](t, kt.Create, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Job().
 				Create(new)
 			err := query.Run()
@@ -44,9 +45,9 @@ func TestJobCreate(t *testing.T) {
 		kt.WithInformedClient[skres.Job](t, kt.Create, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Job().
 				Create(new).
 				DataHandler(func(job *batch.Job) error {
@@ -64,9 +65,9 @@ func TestJobCreate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset()
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Create(new).
 			DataHandler(func(*batch.Job) error {
@@ -81,6 +82,7 @@ func TestJobCreate(t *testing.T) {
 }
 
 func TestJobUpdate(t *testing.T) {
+	client := sk.Client{}
 	old := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-job",
@@ -110,9 +112,9 @@ func TestJobUpdate(t *testing.T) {
 	}
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Job](t, kt.Update, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Job().
 				Update(new)
 
@@ -125,9 +127,9 @@ func TestJobUpdate(t *testing.T) {
 		kt.WithInformedClient[skres.Job](t, kt.Update, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2 // kube fake clients with informers starts with 2 actions
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Job().
 				Update(new).
 				DataHandler(func(job *batch.Job) error {
@@ -145,9 +147,9 @@ func TestJobUpdate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(old)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Update(new).
 			DataHandler(func(*batch.Job) error {
@@ -161,6 +163,7 @@ func TestJobUpdate(t *testing.T) {
 }
 
 func TestJobGet(t *testing.T) {
+	client := sk.Client{}
 	kubeDeployment := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-job",
@@ -188,10 +191,10 @@ func TestJobGet(t *testing.T) {
 			},
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(kubeDeployment))
+	client.Config(context.Background(), fake.NewSimpleClientset(kubeDeployment))
 
 	t.Run("should return custom error when not found", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Get("not-found")
 		_, err := query.Run()
@@ -199,7 +202,7 @@ func TestJobGet(t *testing.T) {
 		assert.Equal(t, skerr.ERROR_NOT_FOUND, err.Error())
 	})
 	t.Run("should return expected object", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Get("my-job")
 		result, err := query.Run()
@@ -208,7 +211,7 @@ func TestJobGet(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 	t.Run("should run DataHandler callback", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Get("my-job").
 			DataHandler(func(job *batch.Job) error {
@@ -221,7 +224,7 @@ func TestJobGet(t *testing.T) {
 		assert.Equal(t, "overrided", result.Containers[0].Image)
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Get("my-job").
 			DataHandler(func(*batch.Job) error {
@@ -234,6 +237,7 @@ func TestJobGet(t *testing.T) {
 }
 
 func TestJobList(t *testing.T) {
+	client := sk.Client{}
 	job1 := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-job",
@@ -278,13 +282,13 @@ func TestJobList(t *testing.T) {
 		},
 	}
 
-	client := sk.NewClient(
+	client.Config(
 		context.Background(),
 		fake.NewSimpleClientset(job1, job2),
 	)
 
 	t.Run("should return expected objects", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			List()
 		result, err := query.Run()
@@ -293,7 +297,7 @@ func TestJobList(t *testing.T) {
 		assert.Equal(t, 2, len(result))
 	})
 	t.Run("should filter by label", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			List().
 			FilterByLabels(map[string]string{
@@ -307,6 +311,7 @@ func TestJobList(t *testing.T) {
 }
 
 func TestJobDelete(t *testing.T) {
+	client := sk.Client{}
 	job := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-job",
@@ -331,9 +336,9 @@ func TestJobDelete(t *testing.T) {
 	}
 	t.Run("should return no errors when calling delete on an object", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(job)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Job().
 			Delete("my-job")
 

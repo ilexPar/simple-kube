@@ -71,22 +71,21 @@ func (ns *Action[T, R]) Delete(resource string) NamespacedDeleteInterface[T, R] 
 	}
 }
 
-func NewQuery(
-	namespace string,
-	ctx context.Context,
-	client kubernetes.Interface,
-) *Query {
-	return &Query{
-		namespace: namespace,
-		ctx:       ctx,
-		client:    client,
-	}
-}
-
 type Query struct {
-	namespace string
 	ctx       context.Context
 	client    kubernetes.Interface
+	namespace string
+}
+
+func (c *Query) Config(
+	ctx context.Context,
+	client kubernetes.Interface,
+	namespace string,
+) *Query {
+	c.ctx = ctx
+	c.client = client
+	c.namespace = namespace
+	return c
 }
 
 func GetNamespacedAPI[R base.KubernetesResources, T NamespacedResources](ctx context.Context, client kubernetes.Interface, res T) skns.NamespacedResourceAPI[R] {

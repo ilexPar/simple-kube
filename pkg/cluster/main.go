@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ilexPar/simple-kube/pkg/base"
 	"github.com/ilexPar/simple-kube/pkg/cluster/resources"
@@ -62,16 +63,15 @@ func (ca *Action[T]) Delete(resource string) ClusterDeleteInterface[T] {
 	}
 }
 
-func NewQuery(ctx context.Context, client kubernetes.Interface) *Query {
-	return &Query{
-		ctx:    ctx,
-		client: client,
-	}
-}
-
 type Query struct {
 	ctx    context.Context
 	client kubernetes.Interface
+}
+
+func (c *Query) Config(ctx context.Context, client kubernetes.Interface) *Query {
+	c.ctx = ctx
+	c.client = client
+	return c
 }
 
 func (c *Query) getResourceAPI(
@@ -83,6 +83,7 @@ func (c *Query) getResourceAPI(
 }
 
 func (c *Query) Namespace() ClusterAction[resources.Namespace] {
+	fmt.Printf("this is me query %v", c)
 	res := resources.Namespace{}
 	return NewClusterAction(
 		res,

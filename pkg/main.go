@@ -58,31 +58,25 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type clusterQuery = *cluster.Query
+
 type Client struct {
 	ctx    context.Context
 	client kubernetes.Interface
+	clusterQuery
 }
 
-func NewClient(ctx context.Context, client kubernetes.Interface) *Client {
-	return &Client{
-		ctx:    ctx,
-		client: client,
-	}
+func (c *Client) Config(ctx context.Context, client kubernetes.Interface) *Client {
+	query := (&cluster.Query{}).Config(ctx, client)
+	c.clusterQuery = query
+	c.ctx = ctx
+	c.client = client
+	return c
 }
 
-func (c *Client) NamespacedQuery(
+func (c *Client) InNamespace(
 	namespace string,
 ) namespaced.QueryNamespace {
-	return namespaced.NewQuery(
-		namespace,
-		c.ctx,
-		c.client,
-	)
-}
-
-func (c *Client) ClusterQuery() cluster.QueryCluster {
-	return cluster.NewQuery(
-		c.ctx,
-		c.client,
-	)
+	query := (&namespaced.Query{}).Config(c.ctx, c.client, namespace)
+	return query
 }
