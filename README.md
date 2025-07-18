@@ -37,10 +37,10 @@ In this example we list Cronjobs in "my-namespace" filtered by a map of labels:
 ```go
 filter := map[string]string{"key": "value"}
 cronjobs, err := client.InNamespace("my-ns").
-		CronJob().
-		List().
-		FilterByLabels(filter).
-		Run()
+  CronJob().
+  List().
+  FilterByLabels(filter).
+  Run()
 ```
 
 # Advanced usage
@@ -59,9 +59,9 @@ Example:
 ```go
 // Create a CronJob with a custom termination grace period
 cron, err := client.InNamespace("my-ns").
-		CronJob().
-		Get("my-cron").
-		DataHandler(func(cronjob *batch.CronJob) error {
+    CronJob().
+    Get("my-cron").
+    DataHandler(func(cronjob *batch.CronJob) error {
         grace := int64(10)
         cronjob.Spec.JobTemplate.Spec.Template.Spec.TerminationGracePeriodSeconds = grace
         return nil
