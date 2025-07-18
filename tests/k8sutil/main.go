@@ -30,7 +30,7 @@ const (
 )
 
 type k8sResources interface {
-	skns.NamespacedResourcesConstrain | skcl.ClusterResourcesConstrain
+	skns.NamespacedResources | skcl.ClusterResourcesConstrain
 }
 
 func WithInformedClient[T k8sResources](

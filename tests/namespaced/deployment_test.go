@@ -18,6 +18,7 @@ import (
 )
 
 func TestDeploymentCreate(t *testing.T) {
+	client := sk.Client{}
 	new := skres.Deployment{
 		Name: "my-deployment",
 		Containers: []skres.Container{
@@ -30,9 +31,9 @@ func TestDeploymentCreate(t *testing.T) {
 
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Deployment](t, kt.Create, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Deployment().
 				Create(new)
 			err := query.Run()
@@ -44,14 +45,13 @@ func TestDeploymentCreate(t *testing.T) {
 		kt.WithInformedClient[skres.Deployment](t, kt.Create, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Deployment().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*apps.Deployment)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(deployment *apps.Deployment) error {
+					assert.Equal(t, new.Name, deployment.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -65,12 +65,12 @@ func TestDeploymentCreate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset()
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*apps.Deployment) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -82,6 +82,7 @@ func TestDeploymentCreate(t *testing.T) {
 }
 
 func TestDeploymentUpdate(t *testing.T) {
+	client := sk.Client{}
 	old := &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-deployment",
@@ -111,9 +112,9 @@ func TestDeploymentUpdate(t *testing.T) {
 	}
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Deployment](t, kt.Update, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Deployment().
 				Update(new)
 
@@ -126,14 +127,13 @@ func TestDeploymentUpdate(t *testing.T) {
 		kt.WithInformedClient[skres.Deployment](t, kt.Update, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2 // kube fake clients with informers starts with 2 actions
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				Deployment().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*apps.Deployment)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(deployment *apps.Deployment) error {
+					assert.Equal(t, new.Name, deployment.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -147,12 +147,12 @@ func TestDeploymentUpdate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(old)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(*apps.Deployment) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -163,6 +163,7 @@ func TestDeploymentUpdate(t *testing.T) {
 }
 
 func TestDeploymentGet(t *testing.T) {
+	client := sk.Client{}
 	kubeDeployment := &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-deployment",
@@ -190,10 +191,10 @@ func TestDeploymentGet(t *testing.T) {
 			},
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(kubeDeployment))
+	client.Config(context.Background(), fake.NewSimpleClientset(kubeDeployment))
 
 	t.Run("should return custom error when not found", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Get("not-found")
 		_, err := query.Run()
@@ -201,7 +202,7 @@ func TestDeploymentGet(t *testing.T) {
 		assert.Equal(t, skerr.ERROR_NOT_FOUND, err.Error())
 	})
 	t.Run("should return expected object", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Get("my-deployment")
 		result, err := query.Run()
@@ -210,11 +211,10 @@ func TestDeploymentGet(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 	t.Run("should run DataHandler callback", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Get("my-deployment").
-			DataHandler(func(res interface{}) error {
-				deployment := res.(*apps.Deployment)
+			DataHandler(func(deployment *apps.Deployment) error {
 				deployment.Spec.Template.Spec.Containers[0].Image = "overrided"
 				return nil
 			})
@@ -224,10 +224,10 @@ func TestDeploymentGet(t *testing.T) {
 		assert.Equal(t, "overrided", result.Containers[0].Image)
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Get("my-deployment").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*apps.Deployment) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()
@@ -237,6 +237,7 @@ func TestDeploymentGet(t *testing.T) {
 }
 
 func TestDeploymentList(t *testing.T) {
+	client := sk.Client{}
 	dpl1 := &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-deployment",
@@ -281,13 +282,13 @@ func TestDeploymentList(t *testing.T) {
 		},
 	}
 
-	client := sk.NewClient(
+	client.Config(
 		context.Background(),
 		fake.NewSimpleClientset(dpl1, dpl2),
 	)
 
 	t.Run("should return expected objects", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			List()
 		result, err := query.Run()
@@ -296,7 +297,7 @@ func TestDeploymentList(t *testing.T) {
 		assert.Equal(t, 2, len(result))
 	})
 	t.Run("should filter by label", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			List().
 			FilterByLabels(map[string]string{
@@ -310,6 +311,7 @@ func TestDeploymentList(t *testing.T) {
 }
 
 func TestDeploymentDelete(t *testing.T) {
+	client := sk.Client{}
 	dpl := &apps.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-deployment",
@@ -334,9 +336,9 @@ func TestDeploymentDelete(t *testing.T) {
 	}
 	t.Run("should return no errors when calling delete on an object", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(dpl)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			Deployment().
 			Delete("my-deployment")
 

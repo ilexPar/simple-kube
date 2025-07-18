@@ -16,3 +16,16 @@ func FlattenLabels(labels map[string]string) string {
 	}
 	return flatLabels
 }
+
+func Cast[T any](obj interface{}) (T, error) {
+	if obj == nil {
+		var zero T
+		return zero, fmt.Errorf("cannot cast nil to %T", zero)
+	}
+	val, ok := obj.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("cannot cast %T to %T", obj, zero)
+	}
+	return val, nil
+}

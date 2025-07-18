@@ -2,13 +2,21 @@
 //
 // # Usage
 //
-// First select if you want to query cluster level objects or namespaced objects
+// First create the client and configure it:
 //
-//	client := simplekube.NewClient(ctx, clientset)
-//	clusterQuery := client.ClusterQuery()
-//	namespacedQuery := client.NamespacedQuery(namespace)
+//	client := simplekube.Client{}
+//	client.Config(ctx, clientset)
 //
-// Then you can choose one of the following actions:
+// This gives basic cluster level objects, for example creating a new namespace:
+//
+//	ns := skcl.Namespace{ Name: "my-namespace" }
+//	err := client.Namespace().Create(ns).Run()
+//
+// Note: skcl being "github.com/ilexPar/simple-kube/pkg/cluster/resources"
+//
+// ## Resource Actions
+//
+// These are valid resource actions for each resource:
 //
 // - Get
 // - List
@@ -18,13 +26,14 @@
 //
 // Select any aditional options for your query and then call `Run()`
 //
-// For  example:
+// In this example we list Cronjobs in "my-namespace" filtered by a map of labels:
 //
-//	 filter := map[string]string{"key": "value"}
-//	 cronjobs, err := namespacedQuery.CronJob().
-//	 	List().
-//		FilterByLabels(filter).
-//		Run()
+//	filter := map[string]string{"key": "value"}
+//	cronjobs, err := client.InNamespace("my-ns").
+//	  CronJob().
+//	  List().
+//	  FilterByLabels(filter).
+//	  Run()
 //
 // # Advanced usage
 //
@@ -40,13 +49,15 @@
 // Example:
 //
 //	// Create a CronJob with a custom termination grace period
-//	cron, err := namespacedQuery.CronJob().Get("my-cron").
-//		DataHandler(func(obj interface{}) error {
-//			kc := res.(*batch.CronJob)
-//			grace := int64(10)
-//			kc.Spec.JobTemplate.Spec.Template.Spec.TerminationGracePeriodSeconds = grace
-//			return nil
-//		})
+//	cron, err := client.InNamespace("my-namespace").
+//	  CronJob().
+//	  Get("my-cron").
+//	  DataHandler(func(cronjob *batch.CronJob) error {
+//	    grace := int64(10)
+//	    cronjob.Spec.JobTemplate.Spec.Template.Spec.TerminationGracePeriodSeconds = grace
+//	    return nil
+//	  }).
+//	  Run()
 package simplekube
 
 import (
@@ -58,31 +69,25 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type clusterQuery = *cluster.Query
+
 type Client struct {
 	ctx    context.Context
 	client kubernetes.Interface
+	clusterQuery
 }
 
-func NewClient(ctx context.Context, client kubernetes.Interface) *Client {
-	return &Client{
-		ctx:    ctx,
-		client: client,
-	}
+func (c *Client) Config(ctx context.Context, client kubernetes.Interface) *Client {
+	query := (&cluster.Query{}).Config(ctx, client)
+	c.clusterQuery = query
+	c.ctx = ctx
+	c.client = client
+	return c
 }
 
-func (c *Client) NamespacedQuery(
+func (c *Client) InNamespace(
 	namespace string,
 ) namespaced.QueryNamespace {
-	return namespaced.NewQuery(
-		namespace,
-		c.ctx,
-		c.client,
-	)
-}
-
-func (c *Client) ClusterQuery() cluster.QueryCluster {
-	return cluster.NewQuery(
-		c.ctx,
-		c.client,
-	)
+	query := (&namespaced.Query{}).Config(c.ctx, c.client, namespace)
+	return query
 }

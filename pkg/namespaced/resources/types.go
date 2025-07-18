@@ -8,14 +8,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type NamespacedResourceAPI interface {
+type NamespacedResourceAPI[R base.KubernetesResources] interface {
 	Config(ctx context.Context, k8s kubernetes.Interface)
 	SetOpts(opts base.QueryOpts)
 
-	Get(name, namespace string) (interface{}, error)
-	Create(namespace string, obj interface{}) error
-	Update(namespace string, obj interface{}) error
-	List(namespace string) ([]interface{}, error)
+	Get(name, namespace string) (*R, error)
+	Create(namespace string, obj *R) error
+	Update(namespace string, obj *R) error
+	List(namespace string) ([]R, error)
 	Delete(name, namespace string) error
 }
 

@@ -3,7 +3,6 @@ package resources
 import (
 	"github.com/ilexPar/simple-kube/pkg/base"
 
-	sm "github.com/ilexPar/struct-marshal/pkg"
 	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,59 +26,65 @@ type CronJobBehaviour struct {
 	StartingDeadline int64            `sm:"spec.startingDeadlineSeconds"`
 }
 
-func (cj CronJob) API() NamespacedResourceAPI {
-	return &CronJobAPI{}
-}
-
-func (cj CronJob) Dump(from interface{}) (interface{}, error) {
-	res := &batch.CronJob{}
-	err := sm.Marshal(from, res)
-	return res, err
-}
-
-func (cj CronJob) Load(from, into interface{}) error {
-	return sm.Unmarshal(from, into)
-}
-
-type CronJobAPI struct {
+type CronJobAPI[R base.KubernetesResources] struct {
 	base.KubeAPI
 }
 
-func (cj *CronJobAPI) Get(name, namespace string) (interface{}, error) {
+func (cj *CronJobAPI[R]) Get(name, namespace string) (*R, error) {
 	res, err := cj.Client.BatchV1().
 		CronJobs(namespace).
 		Get(cj.Context, name, metav1.GetOptions{})
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := base.Cast[*R](res)
+	return result, err
 }
 
-func (cj *CronJobAPI) Create(namespace string, obj interface{}) error {
-	res := obj.(*batch.CronJob)
-	_, err := cj.Client.BatchV1().
+func (cj *CronJobAPI[R]) Create(namespace string, obj *R) error {
+	res, err := base.Cast[*batch.CronJob](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = cj.Client.BatchV1().
 		CronJobs(namespace).
 		Create(cj.Context, res, metav1.CreateOptions{})
 	return err
 }
 
-func (cj *CronJobAPI) Update(namespace string, obj interface{}) error {
-	res := obj.(*batch.CronJob)
-	_, err := cj.Client.BatchV1().
+func (cj *CronJobAPI[R]) Update(namespace string, obj *R) error {
+	res, err := base.Cast[*batch.CronJob](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = cj.Client.BatchV1().
 		CronJobs(namespace).
 		Update(cj.Context, res, metav1.UpdateOptions{})
 	return err
 }
 
-func (cj *CronJobAPI) List(namespace string) ([]interface{}, error) {
-	var res []interface{}
+func (cj *CronJobAPI[R]) List(namespace string) ([]R, error) {
+	res := []R{}
 	list, err := cj.Client.BatchV1().
 		CronJobs(namespace).
 		List(cj.Context, cj.Opts.List)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, v := range list.Items {
-		res = append(res, v)
+		item, err := base.Cast[R](v)
+		if err == nil {
+			res = append(res, item)
+		}
 	}
 	return res, err
 }
 
-func (cj *CronJobAPI) Delete(name, namespace string) error {
+func (cj *CronJobAPI[R]) Delete(name, namespace string) error {
 	return cj.Client.BatchV1().
 		CronJobs(namespace).
 		Delete(cj.Context, name, metav1.DeleteOptions{})

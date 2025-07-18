@@ -3,7 +3,6 @@ package resources
 import (
 	"github.com/ilexPar/simple-kube/pkg/base"
 
-	sm "github.com/ilexPar/struct-marshal/pkg"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -14,59 +13,66 @@ type ConfigMap struct {
 	Data   map[string]string `sm:"data"`
 }
 
-func (cm ConfigMap) API() NamespacedResourceAPI {
-	return &ConfigMapAPI{}
-}
-
-func (cm ConfigMap) Dump(from interface{}) (interface{}, error) {
-	res := &api.ConfigMap{}
-	err := sm.Marshal(from, res)
-	return res, err
-}
-
-func (cm ConfigMap) Load(from, into interface{}) error {
-	return sm.Unmarshal(from, into)
-}
-
-type ConfigMapAPI struct {
+type ConfigMapAPI[R base.KubernetesResources] struct {
 	base.KubeAPI
 }
 
-func (cm *ConfigMapAPI) Get(name, namespace string) (interface{}, error) {
+func (cm *ConfigMapAPI[R]) Get(name, namespace string) (*R, error) {
 	res, err := cm.Client.CoreV1().
 		ConfigMaps(namespace).
 		Get(cm.Context, name, metav1.GetOptions{})
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := base.Cast[*R](res)
+	return result, err
 }
 
-func (cm *ConfigMapAPI) Create(namespace string, obj interface{}) error {
-	res := obj.(*api.ConfigMap)
-	_, err := cm.Client.CoreV1().
+func (cm *ConfigMapAPI[R]) Create(namespace string, obj *R) error {
+	res, err := base.Cast[*api.ConfigMap](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = cm.Client.CoreV1().
 		ConfigMaps(namespace).
 		Create(cm.Context, res, metav1.CreateOptions{})
 	return err
 }
 
-func (cm *ConfigMapAPI) Update(namespace string, obj interface{}) error {
-	res := obj.(*api.ConfigMap)
-	_, err := cm.Client.CoreV1().
+func (cm *ConfigMapAPI[R]) Update(namespace string, obj *R) error {
+	res, err := base.Cast[*api.ConfigMap](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = cm.Client.CoreV1().
 		ConfigMaps(namespace).
 		Update(cm.Context, res, metav1.UpdateOptions{})
 	return err
 }
 
-func (cm *ConfigMapAPI) List(namespace string) ([]interface{}, error) {
-	var res []interface{}
+func (cm *ConfigMapAPI[R]) List(namespace string) ([]R, error) {
+	res := []R{}
 	list, err := cm.Client.CoreV1().
 		ConfigMaps(namespace).
 		List(cm.Context, cm.Opts.List)
-	for _, v := range list.Items {
-		res = append(res, v)
+	if err != nil {
+		return nil, err
 	}
+
+	for _, v := range list.Items {
+		item, err := base.Cast[R](v)
+		if err == nil {
+			res = append(res, item)
+		}
+	}
+
 	return res, err
 }
 
-func (cm *ConfigMapAPI) Delete(name, namespace string) error {
+func (cm *ConfigMapAPI[R]) Delete(name, namespace string) error {
 	return cm.Client.CoreV1().
 		ConfigMaps(namespace).
 		Delete(cm.Context, name, metav1.DeleteOptions{})

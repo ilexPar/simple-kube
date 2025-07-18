@@ -1,14 +1,18 @@
 package namespaced
 
-import "github.com/ilexPar/simple-kube/pkg/errors"
+import (
+	"github.com/ilexPar/simple-kube/pkg/base"
+	"github.com/ilexPar/simple-kube/pkg/errors"
+	sm "github.com/ilexPar/struct-marshal/pkg"
+)
 
-type NamespacedGet[T NamespacedResources] struct {
-	Action[T]
+type NamespacedGet[T NamespacedResources, R base.KubernetesResources] struct {
+	Action[T, R]
 	Id       string
-	callback func(interface{}) error
+	callback func(*R) error
 }
 
-func (g *NamespacedGet[T]) Run() (T, error) {
+func (g *NamespacedGet[T, R]) Run() (T, error) {
 	res := new(T)
 
 	obj, err := g.api.Get(g.Id, g.namespace)
@@ -22,11 +26,11 @@ func (g *NamespacedGet[T]) Run() (T, error) {
 		}
 	}
 
-	err = g.resource.Load(obj, res)
+	err = sm.Unmarshal(obj, res)
 	return *res, err
 }
 
-func (g *NamespacedGet[T]) DataHandler(handler func(interface{}) error) NamespacedGetInterface[T] {
+func (g *NamespacedGet[T, R]) DataHandler(handler func(*R) error) NamespacedGetInterface[T, R] {
 	g.callback = handler
 	return g
 }

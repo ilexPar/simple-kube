@@ -1,13 +1,19 @@
 package namespaced
 
-type NamespacedUpdate[T NamespacedResources] struct {
-	Action[T]
+import (
+	"github.com/ilexPar/simple-kube/pkg/base"
+	sm "github.com/ilexPar/struct-marshal/pkg"
+)
+
+type NamespacedUpdate[T NamespacedResources, R base.KubernetesResources] struct {
+	Action[T, R]
 	Resource T
-	callback func(interface{}) error
+	callback func(*R) error
 }
 
-func (u *NamespacedUpdate[T]) Run() error {
-	obj, err := u.Resource.Dump(u.Resource)
+func (u *NamespacedUpdate[T, R]) Run() error {
+	obj := new(R)
+	err := sm.Marshal(u.Resource, obj)
 	if err != nil {
 		return err
 	}
@@ -22,9 +28,9 @@ func (u *NamespacedUpdate[T]) Run() error {
 	return err
 }
 
-func (u *NamespacedUpdate[T]) DataHandler(
-	handler func(interface{}) error,
-) NamespacedPutInterface[T] {
+func (u *NamespacedUpdate[T, R]) DataHandler(
+	handler func(*R) error,
+) NamespacedPutInterface[T, R] {
 	u.callback = handler
 	return u
 }

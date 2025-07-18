@@ -3,7 +3,6 @@ package resources
 import (
 	"github.com/ilexPar/simple-kube/pkg/base"
 
-	sm "github.com/ilexPar/struct-marshal/pkg"
 	net "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,59 +21,65 @@ type IngressPathDef struct {
 	Port    int          `sm:"backend.service.port.number"`
 }
 
-func (i Ingress) API() NamespacedResourceAPI {
-	return &IngressAPI{}
-}
-
-func (i Ingress) Dump(from interface{}) (interface{}, error) {
-	res := &net.Ingress{}
-	err := sm.Marshal(from, res)
-	return res, err
-}
-
-func (i Ingress) Load(from, into interface{}) error {
-	return sm.Unmarshal(from, into)
-}
-
-type IngressAPI struct {
+type IngressAPI[R base.KubernetesResources] struct {
 	base.KubeAPI
 }
 
-func (i *IngressAPI) Get(name, namespace string) (interface{}, error) {
+func (i *IngressAPI[R]) Get(name, namespace string) (*R, error) {
 	res, err := i.Client.NetworkingV1().
 		Ingresses(namespace).
 		Get(i.Context, name, metav1.GetOptions{})
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := base.Cast[*R](res)
+	return result, err
 }
 
-func (i *IngressAPI) Create(namespace string, obj interface{}) error {
-	res := obj.(*net.Ingress)
-	_, err := i.Client.NetworkingV1().
+func (i *IngressAPI[R]) Create(namespace string, obj *R) error {
+	res, err := base.Cast[*net.Ingress](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = i.Client.NetworkingV1().
 		Ingresses(namespace).
 		Create(i.Context, res, metav1.CreateOptions{})
 	return err
 }
 
-func (i *IngressAPI) Update(namespace string, obj interface{}) error {
-	res := obj.(*net.Ingress)
-	_, err := i.Client.NetworkingV1().
+func (i *IngressAPI[R]) Update(namespace string, obj *R) error {
+	res, err := base.Cast[*net.Ingress](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = i.Client.NetworkingV1().
 		Ingresses(namespace).
 		Update(i.Context, res, metav1.UpdateOptions{})
 	return err
 }
 
-func (i *IngressAPI) List(namespace string) ([]interface{}, error) {
-	var res []interface{}
+func (i *IngressAPI[R]) List(namespace string) ([]R, error) {
+	res := []R{}
 	list, err := i.Client.NetworkingV1().
 		Ingresses(namespace).
 		List(i.Context, i.Opts.List)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, v := range list.Items {
-		res = append(res, v)
+		item, err := base.Cast[R](v)
+		if err == nil {
+			res = append(res, item)
+		}
 	}
 	return res, err
 }
 
-func (i *IngressAPI) Delete(name, namespace string) error {
+func (i *IngressAPI[R]) Delete(name, namespace string) error {
 	return i.Client.NetworkingV1().
 		Ingresses(namespace).
 		Delete(i.Context, name, metav1.DeleteOptions{})

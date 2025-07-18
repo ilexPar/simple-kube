@@ -4,15 +4,25 @@ Library to simplify querying Kubernetes objects
 
 # Usage
 
-First select if you want to query cluster level objects or namespaced objects
+First create the client and configure it
 
 ```go
-client := simplekube.NewClient(ctx, clientset)
-clusterQuery := client.ClusterQuery()
-namespacedQuery := client.NamespacedQuery(namespace)
+client := sk.Client{}
+client.Config(ctx, clientset)
 ```
 
-Then you can choose one of the following actions:
+This gives basic cluster level objects, for example creating a new namespace:
+
+```go
+ns := skcl.Namespace{ Name: "my-namespace" }
+err := client.Namespace().Create(ns).Run()
+```
+
+Note: skcl being "github.com/ilexPar/simple-kube/pkg/cluster/resources"
+
+## Resource Actions
+
+These are valid resource actions for each resource:
 
 - Get
 - List
@@ -22,13 +32,15 @@ Then you can choose one of the following actions:
 
 Select any aditional options for your query and then call `Run()`
 
-For  example:
+In this example we list Cronjobs in "my-namespace" filtered by a map of labels:
+
 ```go
 filter := map[string]string{"key": "value"}
-cronjobs, err := namespacedQuery.CronJob().
-    List().
-    FilterByLabels(filter).
-    Run()
+cronjobs, err := client.InNamespace("my-ns").
+		CronJob().
+		List().
+		FilterByLabels(filter).
+		Run()
 ```
 
 # Advanced usage
@@ -46,11 +58,12 @@ Example:
 
 ```go
 // Create a CronJob with a custom termination grace period
-cron, err := namespacedQuery.CronJob().Get("my-cron").
-    DataHandler(func(obj interface{}) error {
-        kc := res.(*batch.CronJob)
+cron, err := client.InNamespace("my-ns").
+		CronJob().
+		Get("my-cron").
+		DataHandler(func(cronjob *batch.CronJob) error {
         grace := int64(10)
-        kc.Spec.JobTemplate.Spec.Template.Spec.TerminationGracePeriodSeconds = grace
+        cronjob.Spec.JobTemplate.Spec.Template.Spec.TerminationGracePeriodSeconds = grace
         return nil
     })
 ```

@@ -18,6 +18,7 @@ import (
 )
 
 func TestCronJobCreate(t *testing.T) {
+	client := sk.Client{}
 	new := skres.CronJob{
 		Name: "my-cron",
 		Containers: []skres.Container{
@@ -30,9 +31,9 @@ func TestCronJobCreate(t *testing.T) {
 
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.CronJob](t, kt.Create, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				CronJob().
 				Create(new)
 			err := query.Run()
@@ -44,14 +45,13 @@ func TestCronJobCreate(t *testing.T) {
 		kt.WithInformedClient[skres.CronJob](t, kt.Create, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				CronJob().
 				Create(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*batch.CronJob)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(res *batch.CronJob) error {
+					assert.Equal(t, new.Name, res.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -65,12 +65,12 @@ func TestCronJobCreate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset()
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Create(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(res *batch.CronJob) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -82,6 +82,7 @@ func TestCronJobCreate(t *testing.T) {
 }
 
 func TestCronJobUpdate(t *testing.T) {
+	client := sk.Client{}
 	old := &batch.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cron",
@@ -117,9 +118,9 @@ func TestCronJobUpdate(t *testing.T) {
 	}
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.CronJob](t, kt.Update, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				CronJob().
 				Update(new)
 
@@ -132,14 +133,13 @@ func TestCronJobUpdate(t *testing.T) {
 		kt.WithInformedClient[skres.CronJob](t, kt.Update, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2 // kube fake clients with informers starts with 2 actions
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.NamespacedQuery("default").
+			query := client.InNamespace("default").
 				CronJob().
 				Update(new).
-				DataHandler(func(res interface{}) error {
-					obj := res.(*batch.CronJob)
-					assert.Equal(t, new.Name, obj.Name)
+				DataHandler(func(res *batch.CronJob) error {
+					assert.Equal(t, new.Name, res.Name)
 					assert.Equal(t, baseKubeActions, len(k8s.Actions()))
 					hasCallbackRun = true
 					return nil
@@ -153,12 +153,12 @@ func TestCronJobUpdate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(old)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Update(new).
-			DataHandler(func(res interface{}) error {
+			DataHandler(func(res *batch.CronJob) error {
 				return errors.New("test error")
 			})
 		err := query.Run()
@@ -169,6 +169,7 @@ func TestCronJobUpdate(t *testing.T) {
 }
 
 func TestCronJobGet(t *testing.T) {
+	client := sk.Client{}
 	kubeCronJob := &batch.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cron",
@@ -202,10 +203,10 @@ func TestCronJobGet(t *testing.T) {
 			},
 		},
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(kubeCronJob))
+	client.Config(context.Background(), fake.NewSimpleClientset(kubeCronJob))
 
 	t.Run("should return custom error when not found", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Get("not-found")
 		_, err := query.Run()
@@ -213,7 +214,7 @@ func TestCronJobGet(t *testing.T) {
 		assert.Equal(t, skerr.ERROR_NOT_FOUND, err.Error())
 	})
 	t.Run("should return expected object", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Get("my-cron")
 		result, err := query.Run()
@@ -222,11 +223,10 @@ func TestCronJobGet(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 	t.Run("should run DataHandler callback", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Get("my-cron").
-			DataHandler(func(res interface{}) error {
-				cron := res.(*batch.CronJob)
+			DataHandler(func(cron *batch.CronJob) error {
 				cron.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image = "overrided"
 				return nil
 			})
@@ -236,10 +236,10 @@ func TestCronJobGet(t *testing.T) {
 		assert.Equal(t, "overrided", result.Containers[0].Image)
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Get("my-cron").
-			DataHandler(func(interface{}) error {
+			DataHandler(func(*batch.CronJob) error {
 				return errors.New("test error")
 			})
 		_, err := query.Run()
@@ -249,6 +249,7 @@ func TestCronJobGet(t *testing.T) {
 }
 
 func TestCronJobList(t *testing.T) {
+	client := sk.Client{}
 	job1 := &batch.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cron",
@@ -303,13 +304,13 @@ func TestCronJobList(t *testing.T) {
 		},
 	}
 
-	client := sk.NewClient(
+	client.Config(
 		context.Background(),
 		fake.NewSimpleClientset(job1, job2),
 	)
 
 	t.Run("should return expected objects", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			List()
 		result, err := query.Run()
@@ -318,7 +319,7 @@ func TestCronJobList(t *testing.T) {
 		assert.Equal(t, 2, len(result))
 	})
 	t.Run("should filter by label", func(t *testing.T) {
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			List().
 			FilterByLabels(map[string]string{
@@ -332,6 +333,7 @@ func TestCronJobList(t *testing.T) {
 }
 
 func TestCronJobDelete(t *testing.T) {
+	client := sk.Client{}
 	job := &batch.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cron",
@@ -361,9 +363,9 @@ func TestCronJobDelete(t *testing.T) {
 	}
 	t.Run("should return no errors when calling delete on an object", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(job)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.NamespacedQuery("default").
+		query := client.InNamespace("default").
 			CronJob().
 			Delete("my-cron")
 

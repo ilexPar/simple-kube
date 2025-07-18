@@ -3,7 +3,6 @@ package resources
 import (
 	"github.com/ilexPar/simple-kube/pkg/base"
 
-	sm "github.com/ilexPar/struct-marshal/pkg"
 	apps "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -18,59 +17,65 @@ type Deployment struct {
 	NodeSelector    map[string]string `sm:"spec.template.spec.nodeSelector"`
 }
 
-func (d Deployment) API() NamespacedResourceAPI {
-	return &DeploymentAPI{}
-}
-
-func (d Deployment) Dump(from interface{}) (interface{}, error) {
-	res := &apps.Deployment{}
-	err := sm.Marshal(from, res)
-	return res, err
-}
-
-func (d Deployment) Load(from, into interface{}) error {
-	return sm.Unmarshal(from, into)
-}
-
-type DeploymentAPI struct {
+type DeploymentAPI[R base.KubernetesResources] struct {
 	base.KubeAPI
 }
 
-func (d *DeploymentAPI) Get(name, namespace string) (interface{}, error) {
+func (d *DeploymentAPI[R]) Get(name, namespace string) (*R, error) {
 	res, err := d.Client.AppsV1().
 		Deployments(namespace).
 		Get(d.Context, name, metav1.GetOptions{})
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := base.Cast[*R](res)
+	return result, err
 }
 
-func (d *DeploymentAPI) Create(namespace string, obj interface{}) error {
-	res := obj.(*apps.Deployment)
-	_, err := d.Client.AppsV1().
+func (d *DeploymentAPI[R]) Create(namespace string, obj *R) error {
+	res, err := base.Cast[*apps.Deployment](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.Client.AppsV1().
 		Deployments(namespace).
 		Create(d.Context, res, metav1.CreateOptions{})
 	return err
 }
 
-func (d *DeploymentAPI) Update(namespace string, obj interface{}) error {
-	res := obj.(*apps.Deployment)
-	_, err := d.Client.AppsV1().
+func (d *DeploymentAPI[R]) Update(namespace string, obj *R) error {
+	res, err := base.Cast[*apps.Deployment](obj)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.Client.AppsV1().
 		Deployments(namespace).
 		Update(d.Context, res, metav1.UpdateOptions{})
 	return err
 }
 
-func (d *DeploymentAPI) List(namespace string) ([]interface{}, error) {
-	var res []interface{}
+func (d *DeploymentAPI[R]) List(namespace string) ([]R, error) {
+	res := []R{}
 	list, err := d.Client.AppsV1().
 		Deployments(namespace).
 		List(d.Context, d.Opts.List)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, v := range list.Items {
-		res = append(res, v)
+		item, err := base.Cast[R](v)
+		if err == nil {
+			res = append(res, item)
+		}
 	}
 	return res, err
 }
 
-func (d *DeploymentAPI) Delete(name, namespace string) error {
+func (d *DeploymentAPI[R]) Delete(name, namespace string) error {
 	return d.Client.AppsV1().
 		Deployments(namespace).
 		Delete(d.Context, name, metav1.DeleteOptions{})

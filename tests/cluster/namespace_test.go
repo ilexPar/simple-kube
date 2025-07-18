@@ -18,15 +18,16 @@ import (
 )
 
 func TestNamespaceCreate(t *testing.T) {
+	client := sk.Client{}
 	new := skres.Namespace{
 		Name: "some-ns",
 	}
 
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Namespace](t, kt.Create, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.ClusterQuery().
+			query := client.
 				Namespace().
 				Create(new)
 			err := query.Run()
@@ -38,9 +39,9 @@ func TestNamespaceCreate(t *testing.T) {
 		kt.WithInformedClient[skres.Namespace](t, kt.Create, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.ClusterQuery().
+			query := client.
 				Namespace().
 				Create(new).
 				DataHandler(func(res interface{}) error {
@@ -59,9 +60,9 @@ func TestNamespaceCreate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset()
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.ClusterQuery().
+		query := client.
 			Namespace().
 			Create(new).
 			DataHandler(func(res interface{}) error {
@@ -75,6 +76,7 @@ func TestNamespaceCreate(t *testing.T) {
 }
 
 func TestNamespaceUpdate(t *testing.T) {
+	client := sk.Client{}
 	old := &api.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "some-ns",
@@ -91,12 +93,9 @@ func TestNamespaceUpdate(t *testing.T) {
 	}
 	t.Run("should success without errors", func(t *testing.T) {
 		kt.WithInformedClient[skres.Namespace](t, kt.Update, func(k8s *fake.Clientset) {
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.ClusterQuery().
-				Namespace().
-				Update(new)
-
+			query := client.Namespace().Update(new)
 			err := query.Run()
 
 			assert.Nil(t, err)
@@ -106,9 +105,9 @@ func TestNamespaceUpdate(t *testing.T) {
 		kt.WithInformedClient[skres.Namespace](t, kt.Update, func(k8s *fake.Clientset) {
 			hasCallbackRun := false
 			baseKubeActions := 2 // kube fake clients with informers starts with 2 actions
-			client := sk.NewClient(context.Background(), k8s)
+			client.Config(context.Background(), k8s)
 
-			query := client.ClusterQuery().
+			query := client.
 				Namespace().
 				Update(new).
 				DataHandler(func(res interface{}) error {
@@ -127,9 +126,9 @@ func TestNamespaceUpdate(t *testing.T) {
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(old)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.ClusterQuery().
+		query := client.
 			Namespace().
 			Update(new).
 			DataHandler(func(res interface{}) error {
@@ -143,6 +142,7 @@ func TestNamespaceUpdate(t *testing.T) {
 }
 
 func TestNamespaceGet(t *testing.T) {
+	client := sk.Client{}
 	kubeSvc := &api.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "my-ns",
@@ -151,20 +151,16 @@ func TestNamespaceGet(t *testing.T) {
 	expected := skres.Namespace{
 		Name: "my-ns",
 	}
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(kubeSvc))
+	client.Config(context.Background(), fake.NewSimpleClientset(kubeSvc))
 
 	t.Run("should return custom error when not found", func(t *testing.T) {
-		query := client.ClusterQuery().
-			Namespace().
-			Get("not-found")
+		query := client.Namespace().Get("not-found")
 		_, err := query.Run()
 
 		assert.Equal(t, skerr.ERROR_NOT_FOUND, err.Error())
 	})
 	t.Run("should return expected object", func(t *testing.T) {
-		query := client.ClusterQuery().
-			Namespace().
-			Get("my-ns")
+		query := client.Namespace().Get("my-ns")
 		result, err := query.Run()
 
 		assert.Nil(t, err)
@@ -174,7 +170,7 @@ func TestNamespaceGet(t *testing.T) {
 		overrideLabels := map[string]string{
 			"test": "test",
 		}
-		query := client.ClusterQuery().
+		query := client.
 			Namespace().
 			Get("my-ns").
 			DataHandler(func(res interface{}) error {
@@ -188,7 +184,7 @@ func TestNamespaceGet(t *testing.T) {
 		assert.Equal(t, overrideLabels, result.Labels)
 	})
 	t.Run("should cancel execution on callback error", func(t *testing.T) {
-		query := client.ClusterQuery().
+		query := client.
 			Namespace().
 			Get("my-ns").
 			DataHandler(func(interface{}) error {
@@ -201,6 +197,7 @@ func TestNamespaceGet(t *testing.T) {
 }
 
 func TestNamespaceList(t *testing.T) {
+	client := sk.Client{}
 	ns1 := &api.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "my-ns",
@@ -219,19 +216,17 @@ func TestNamespaceList(t *testing.T) {
 		},
 	}
 
-	client := sk.NewClient(context.Background(), fake.NewSimpleClientset(ns1, ns2))
+	client.Config(context.Background(), fake.NewSimpleClientset(ns1, ns2))
 
 	t.Run("should return expected objects", func(t *testing.T) {
-		query := client.ClusterQuery().
-			Namespace().
-			List()
+		query := client.Namespace().List()
 		result, err := query.Run()
 
 		assert.Nil(t, err)
 		assert.Equal(t, 2, len(result))
 	})
 	t.Run("should filter by label", func(t *testing.T) {
-		query := client.ClusterQuery().
+		query := client.
 			Namespace().
 			List().
 			FilterByLabels(map[string]string{
@@ -245,6 +240,7 @@ func TestNamespaceList(t *testing.T) {
 }
 
 func TestServiceDelete(t *testing.T) {
+	client := sk.Client{}
 	dpl := &api.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "my-ns",
@@ -256,12 +252,9 @@ func TestServiceDelete(t *testing.T) {
 	}
 	t.Run("should return no errors when calling delete on an object", func(t *testing.T) {
 		k8s := fake.NewSimpleClientset(dpl)
-		client := sk.NewClient(context.Background(), k8s)
+		client.Config(context.Background(), k8s)
 
-		query := client.ClusterQuery().
-			Namespace().
-			Delete("my-ns")
-
+		query := client.Namespace().Delete("my-ns")
 		err := query.Run()
 
 		assert.Nil(t, err)
