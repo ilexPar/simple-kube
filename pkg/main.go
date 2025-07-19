@@ -77,7 +77,7 @@ type Client struct {
 	clusterQuery
 }
 
-func (c *Client) Config(ctx context.Context, client kubernetes.Interface) *Client {
+func (c *Client) Config(ctx context.Context, client kubernetes.Interface) ClientInterface {
 	query := (&cluster.Query{}).Config(ctx, client)
 	c.clusterQuery = query
 	c.ctx = ctx
