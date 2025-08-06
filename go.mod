@@ -3,7 +3,7 @@ module github.com/ilexPar/simple-kube
 go 1.22.2
 
 require (
-	github.com/ilexPar/struct-marshal v0.1.3
+	github.com/ilexPar/struct-marshal v0.1.7
 	github.com/stretchr/testify v1.9.0
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
