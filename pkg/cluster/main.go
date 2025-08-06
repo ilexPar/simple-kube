@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/client-go/kubernetes"
 
@@ -83,7 +82,6 @@ func (c *Query) getResourceAPI(
 }
 
 func (c *Query) Namespace() ClusterAction[resources.Namespace] {
-	fmt.Printf("this is me query %v", c)
 	res := resources.Namespace{}
 	return NewClusterAction(
 		res,
