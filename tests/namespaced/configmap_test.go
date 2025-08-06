@@ -5,15 +5,15 @@ import (
 	"errors"
 	"testing"
 
-	sk "github.com/ilexPar/simple-kube/pkg"
-	skerr "github.com/ilexPar/simple-kube/pkg/errors"
-	skres "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
-	kt "github.com/ilexPar/simple-kube/tests/k8sutil"
-
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+
+	sk "github.com/ilexPar/simple-kube/pkg"
+	skerr "github.com/ilexPar/simple-kube/pkg/errors"
+	skres "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
+	kt "github.com/ilexPar/simple-kube/tests/k8sutil"
 )
 
 func TestConfigMapCreate(t *testing.T) {

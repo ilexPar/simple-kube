@@ -19,5 +19,6 @@ type ResourceInterface interface {
 }
 
 type KubernetesResources interface {
-	apps.Deployment | api.ConfigMap | api.Service | batch.Job | batch.CronJob | net.Ingress | scaling.HorizontalPodAutoscaler
+	apps.Deployment | api.ConfigMap | api.Service | batch.Job | batch.CronJob |
+		net.Ingress | scaling.HorizontalPodAutoscaler
 }

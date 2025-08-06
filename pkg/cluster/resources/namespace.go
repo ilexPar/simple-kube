@@ -1,11 +1,11 @@
 package resources
 
 import (
-	"github.com/ilexPar/simple-kube/pkg/base"
-
 	sm "github.com/ilexPar/struct-marshal/pkg"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
 )
 
 type Namespace struct {

@@ -1,10 +1,10 @@
 package resources
 
 import (
-	"github.com/ilexPar/simple-kube/pkg/base"
-
 	net "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
 )
 
 type Ingress struct {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/ilexPar/simple-kube/pkg/base"
 	"github.com/ilexPar/simple-kube/pkg/cluster/resources"
-
-	"k8s.io/client-go/kubernetes"
 )
 
 type Action[T ClusterResources] struct {

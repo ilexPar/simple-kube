@@ -3,16 +3,16 @@ package namespaced
 import (
 	"context"
 
-	"github.com/ilexPar/simple-kube/pkg/base"
-	"github.com/ilexPar/simple-kube/pkg/namespaced/resources"
-	skns "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
-
 	apps "k8s.io/api/apps/v1"
 	scaling "k8s.io/api/autoscaling/v2"
 	batch "k8s.io/api/batch/v1"
 	api "k8s.io/api/core/v1"
 	net "k8s.io/api/networking/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
+	"github.com/ilexPar/simple-kube/pkg/namespaced/resources"
+	skns "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
 )
 
 type Action[T NamespacedResources, R base.KubernetesResources] struct {
@@ -88,7 +88,11 @@ func (c *Query) Config(
 	return c
 }
 
-func GetNamespacedAPI[R base.KubernetesResources, T NamespacedResources](ctx context.Context, client kubernetes.Interface, res T) skns.NamespacedResourceAPI[R] {
+func GetNamespacedAPI[R base.KubernetesResources, T NamespacedResources](
+	ctx context.Context,
+	client kubernetes.Interface,
+	res T,
+) skns.NamespacedResourceAPI[R] {
 	var api skns.NamespacedResourceAPI[R]
 
 	switch any(res).(type) {

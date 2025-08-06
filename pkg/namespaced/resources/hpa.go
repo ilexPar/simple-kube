@@ -1,9 +1,10 @@
 package resources
 
 import (
-	"github.com/ilexPar/simple-kube/pkg/base"
 	scaling "k8s.io/api/autoscaling/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
 )
 
 type HPA struct {

@@ -3,9 +3,9 @@ package resources
 import (
 	"context"
 
-	"github.com/ilexPar/simple-kube/pkg/base"
-
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
 )
 
 type NamespacedResourceAPI[R base.KubernetesResources] interface {

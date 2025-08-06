@@ -8,11 +8,6 @@ import (
 	"testing"
 	"time"
 
-	skcl "github.com/ilexPar/simple-kube/pkg/cluster"
-	skclres "github.com/ilexPar/simple-kube/pkg/cluster/resources"
-	skns "github.com/ilexPar/simple-kube/pkg/namespaced"
-	sknsres "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
-
 	"github.com/stretchr/testify/assert"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -20,6 +15,11 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	clienttesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
+
+	skcl "github.com/ilexPar/simple-kube/pkg/cluster"
+	skclres "github.com/ilexPar/simple-kube/pkg/cluster/resources"
+	skns "github.com/ilexPar/simple-kube/pkg/namespaced"
+	sknsres "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
 )
 
 type informedActions int
