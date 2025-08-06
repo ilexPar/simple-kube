@@ -1,8 +1,9 @@
 package namespaced
 
 import (
-	"github.com/ilexPar/simple-kube/pkg/base"
 	sm "github.com/ilexPar/struct-marshal/pkg"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
 )
 
 type NamespacedCreate[T NamespacedResources, R base.KubernetesResources] struct {

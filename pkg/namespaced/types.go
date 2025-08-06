@@ -1,14 +1,14 @@
 package namespaced
 
 import (
-	"github.com/ilexPar/simple-kube/pkg/base"
-	"github.com/ilexPar/simple-kube/pkg/namespaced/resources"
-
 	apps "k8s.io/api/apps/v1"
 	scaling "k8s.io/api/autoscaling/v2"
 	batch "k8s.io/api/batch/v1"
 	api "k8s.io/api/core/v1"
 	net "k8s.io/api/networking/v1"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
+	"github.com/ilexPar/simple-kube/pkg/namespaced/resources"
 )
 
 type NamespacedResources interface {

@@ -1,9 +1,10 @@
 package namespaced
 
 import (
+	sm "github.com/ilexPar/struct-marshal/pkg"
+
 	"github.com/ilexPar/simple-kube/pkg/base"
 	"github.com/ilexPar/simple-kube/pkg/errors"
-	sm "github.com/ilexPar/struct-marshal/pkg"
 )
 
 type NamespacedGet[T NamespacedResources, R base.KubernetesResources] struct {

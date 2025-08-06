@@ -3,9 +3,10 @@ package simplekube
 import (
 	"context"
 
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/ilexPar/simple-kube/pkg/cluster"
 	"github.com/ilexPar/simple-kube/pkg/namespaced"
-	"k8s.io/client-go/kubernetes"
 )
 
 type ClientInterface interface {

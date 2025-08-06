@@ -1,11 +1,11 @@
 package resources
 
 import (
-	"github.com/ilexPar/simple-kube/pkg/base"
-
 	sm "github.com/ilexPar/struct-marshal/pkg"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ilexPar/simple-kube/pkg/base"
 )
 
 type Namespace struct {
@@ -39,16 +39,22 @@ func (n *NamespaceAPI) Get(name string) (interface{}, error) {
 }
 
 func (n *NamespaceAPI) Create(obj interface{}) error {
-	res := obj.(*api.Namespace)
-	_, err := n.Client.CoreV1().
+	res, err := base.Cast[*api.Namespace](obj)
+	if err != nil {
+		return err
+	}
+	_, err = n.Client.CoreV1().
 		Namespaces().
 		Create(n.Context, res, metav1.CreateOptions{})
 	return err
 }
 
 func (n *NamespaceAPI) Update(obj interface{}) error {
-	res := obj.(*api.Namespace)
-	_, err := n.Client.CoreV1().
+	res, err := base.Cast[*api.Namespace](obj)
+	if err != nil {
+		return err
+	}
+	_, err = n.Client.CoreV1().
 		Namespaces().
 		Update(n.Context, res, metav1.UpdateOptions{})
 	return err
