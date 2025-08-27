@@ -33,8 +33,8 @@ type ContainerPort struct {
 }
 
 type ContainerResources struct {
-	Cpu    string `json:"cpu"`
-	Memory string `json:"memory"`
+	Cpu    string `sm:"cpu"`
+	Memory string `sm:"memory"`
 }
 
 type EnvVar struct {
