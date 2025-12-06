@@ -2,12 +2,27 @@ package base
 
 import "fmt"
 
+func flattenLabelKeyPair(key string, val string) string {
+	var operator string
+	var value string
+
+	if val[0] == '!' {
+		operator = "!="
+		value = val[1:]
+	} else {
+		operator = "="
+		value = val
+	}
+
+	return fmt.Sprintf("%s%s%s", key, operator, value)
+}
+
 func FlattenLabels(labels map[string]string) string {
 	var flatLabels string
 	labelLength := len(labels)
 	idx := 0
 	for i, v := range labels {
-		label := fmt.Sprintf("%s=%s", i, v)
+		label := flattenLabelKeyPair(i, v)
 		flatLabels += label
 		if idx < (labelLength - 1) {
 			flatLabels += ","

@@ -35,6 +35,15 @@
 //	  FilterByLabels(filter).
 //	  Run()
 //
+// Or you can also exclude some particular label value by preceding it with "!":
+//
+//	filter := map[string]string{"key": "!value"}
+//	cronjobs, err := client.InNamespace("my-ns").
+//	  CronJob().
+//	  List().
+//	  FilterByLabels(filter).
+//	  Run()
+//
 // # Advanced usage
 //
 // Objects are simplified for basic use cases. But you can have access to the

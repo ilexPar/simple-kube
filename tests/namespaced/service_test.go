@@ -291,6 +291,18 @@ func TestServiceList(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, 1, len(result))
 	})
+	t.Run("should handle filtering labels by negating value", func(t *testing.T) {
+		query := client.InNamespace("default").
+			Service().
+			List().
+			FilterByLabels(map[string]string{
+				"app": "!nginx",
+			})
+		result, err := query.Run()
+
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(result))
+	})
 }
 
 func TestServiceDelete(t *testing.T) {

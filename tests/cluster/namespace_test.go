@@ -5,16 +5,15 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	api "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
 	sk "github.com/ilexPar/simple-kube/pkg"
 	skres "github.com/ilexPar/simple-kube/pkg/cluster/resources"
 	skerr "github.com/ilexPar/simple-kube/pkg/errors"
 	kt "github.com/ilexPar/simple-kube/tests/k8sutil"
-
-	api "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestNamespaceCreate(t *testing.T) {
@@ -231,6 +230,18 @@ func TestNamespaceList(t *testing.T) {
 			List().
 			FilterByLabels(map[string]string{
 				"app": "nginx",
+			})
+		result, err := query.Run()
+
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(result))
+	})
+	t.Run("should handle filtering labels by negating value", func(t *testing.T) {
+		query := client.
+			Namespace().
+			List().
+			FilterByLabels(map[string]string{
+				"app": "!nginx",
 			})
 		result, err := query.Run()
 
