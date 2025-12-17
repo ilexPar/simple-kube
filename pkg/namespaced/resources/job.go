@@ -82,7 +82,10 @@ func (j *JobAPI[R]) List(namespace string) ([]R, error) {
 }
 
 func (j *JobAPI[R]) Delete(name, namespace string) error {
+	propagationPolicy := metav1.DeletePropagationBackground
 	return j.Client.BatchV1().
 		Jobs(namespace).
-		Delete(j.Context, name, metav1.DeleteOptions{})
+		Delete(j.Context, name, metav1.DeleteOptions{
+			PropagationPolicy: &propagationPolicy,
+		})
 }
