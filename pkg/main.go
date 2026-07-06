@@ -44,10 +44,28 @@
 //	  FilterByLabels(filter).
 //	  Run()
 //
+// ## Per-query context
+//
+// The context configured on the client (via `Config`) is used by default. To
+// scope a single query with its own context — for example a per-request deadline
+// or cancellation — chain `WithContext` before `Run`. It is available on every
+// action in both scopes; if omitted, the client-configured context applies.
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+//	defer cancel()
+//	err := client.InNamespace("my-ns").
+//	  Deployment().
+//	  Create(dep).
+//	  WithContext(ctx).
+//	  Run()
+//
 // # Advanced usage
 //
 // Objects are simplified for basic use cases. But you can have access to the
-// raw kubernetes resource by providing a callback to `DataHandler`.
+// raw kubernetes resource by providing a callback to `DataHandler`. The callback
+// receives a pointer to the strongly-typed native Kubernetes object (for
+// example *batch.CronJob or *api.Namespace) — never an interface{} — for both
+// namespaced and cluster-scoped resources.
 //
 // `Get` actions will execute the callback after getting Kubernetes API objects
 // and before loading them into library ones. While `Create` and `Update` execute
@@ -55,15 +73,27 @@
 // Kubernetes API. This way you should be able to tweak any aditional configuration
 // not yet available or supported by the library.
 //
-// Example:
+// Example on a namespaced resource:
 //
-//	// Create a CronJob with a custom termination grace period
+//	// Get a CronJob and override its termination grace period
 //	cron, err := client.InNamespace("my-namespace").
 //	  CronJob().
 //	  Get("my-cron").
 //	  DataHandler(func(cronjob *batch.CronJob) error {
 //	    grace := int64(10)
 //	    cronjob.Spec.JobTemplate.Spec.Template.Spec.TerminationGracePeriodSeconds = grace
+//	    return nil
+//	  }).
+//	  Run()
+//
+// The same typed callback is available on cluster-scoped resources:
+//
+//	// Create a Namespace with an annotation not exposed by the simplified type
+//	err := client.
+//	  Namespace().
+//	  Create(skcl.Namespace{Name: "my-namespace"}).
+//	  DataHandler(func(ns *api.Namespace) error {
+//	    ns.Annotations = map[string]string{"team": "platform"}
 //	    return nil
 //	  }).
 //	  Run()
@@ -81,9 +111,9 @@ import (
 type clusterQuery = *cluster.Query
 
 type Client struct {
+	clusterQuery
 	ctx    context.Context
 	client kubernetes.Interface
-	clusterQuery
 }
 
 func (c *Client) Config(ctx context.Context, client kubernetes.Interface) ClientInterface {

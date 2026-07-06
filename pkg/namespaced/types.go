@@ -7,47 +7,16 @@ import (
 	api "k8s.io/api/core/v1"
 	net "k8s.io/api/networking/v1"
 
-	"github.com/ilexPar/simple-kube/pkg/base"
+	"github.com/ilexPar/simple-kube/pkg/core"
 	"github.com/ilexPar/simple-kube/pkg/namespaced/resources"
 )
 
-type NamespacedResources interface {
-	resources.Deployment | resources.Service | resources.Job | resources.CronJob | resources.ConfigMap | resources.Ingress | resources.HPA
-}
-
 type QueryNamespace interface {
-	Deployment() NamespacedAction[resources.Deployment, apps.Deployment]
-	Service() NamespacedAction[resources.Service, api.Service]
-	Job() NamespacedAction[resources.Job, batch.Job]
-	CronJob() NamespacedAction[resources.CronJob, batch.CronJob]
-	ConfigMap() NamespacedAction[resources.ConfigMap, api.ConfigMap]
-	Ingress() NamespacedAction[resources.Ingress, net.Ingress]
-	HPA() NamespacedAction[resources.HPA, scaling.HorizontalPodAutoscaler]
-}
-
-type NamespacedAction[T NamespacedResources, R base.KubernetesResources] interface {
-	Get(string) NamespacedGetInterface[T, R]
-	List() NamespacedListInterface[T, R]
-	Create(T) NamespacedPutInterface[T, R]
-	Update(T) NamespacedPutInterface[T, R]
-	Delete(string) NamespacedDeleteInterface[T, R]
-}
-
-type NamespacedGetInterface[T NamespacedResources, R base.KubernetesResources] interface {
-	Run() (T, error)
-	DataHandler(func(*R) error) NamespacedGetInterface[T, R]
-}
-
-type NamespacedPutInterface[T NamespacedResources, R base.KubernetesResources] interface {
-	Run() error
-	DataHandler(func(*R) error) NamespacedPutInterface[T, R]
-}
-
-type NamespacedListInterface[T NamespacedResources, R base.KubernetesResources] interface {
-	Run() ([]T, error)
-	FilterByLabels(labels map[string]string) NamespacedListInterface[T, R]
-}
-
-type NamespacedDeleteInterface[T NamespacedResources, R base.KubernetesResources] interface {
-	Run() error
+	Deployment() core.ScopeAction[resources.Deployment, apps.Deployment]
+	Service() core.ScopeAction[resources.Service, api.Service]
+	Job() core.ScopeAction[resources.Job, batch.Job]
+	CronJob() core.ScopeAction[resources.CronJob, batch.CronJob]
+	ConfigMap() core.ScopeAction[resources.ConfigMap, api.ConfigMap]
+	Ingress() core.ScopeAction[resources.Ingress, net.Ingress]
+	HPA() core.ScopeAction[resources.HPA, scaling.HorizontalPodAutoscaler]
 }

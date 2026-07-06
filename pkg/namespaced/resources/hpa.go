@@ -73,7 +73,6 @@ func (h *HPAapi[R]) Update(namespace string, obj *R) error {
 }
 
 func (h *HPAapi[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := h.Client.AutoscalingV2().
 		HorizontalPodAutoscalers(namespace).
 		List(h.Context, h.Opts.List)
@@ -81,6 +80,7 @@ func (h *HPAapi[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {

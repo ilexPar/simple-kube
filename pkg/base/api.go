@@ -20,3 +20,9 @@ func (api *KubeAPI) Config(ctx context.Context, client kubernetes.Interface) {
 func (api *KubeAPI) SetOpts(opts QueryOpts) {
 	api.Opts = opts
 }
+
+func (api *KubeAPI) SetContext(ctx context.Context) {
+	if ctx != nil {
+		api.Context = ctx
+	}
+}
