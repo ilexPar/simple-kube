@@ -11,6 +11,7 @@ import (
 type NamespacedResourceAPI[R base.KubernetesResources] interface {
 	Config(ctx context.Context, k8s kubernetes.Interface)
 	SetOpts(opts base.QueryOpts)
+	SetContext(ctx context.Context)
 
 	Get(name, namespace string) (*R, error)
 	Create(namespace string, obj *R) error

@@ -1,16 +1,26 @@
 package core
 
+import "context"
+
 // Put implements both Create and Update; the concrete Backend call is bound to
 // the send field at construction time.
 type Put[T any, R any] struct {
 	Action[T, R]
 	Resource T
-	send     func(*R) error
+	// Ctx overrides the client-configured context for this query; nil falls back
+	// to the context the client was configured with.
+	Ctx      context.Context
+	send     func(context.Context, *R) error
 	callback func(*R) error
 }
 
 func (p *Put[T, R]) DataHandler(handler func(*R) error) PutInterface[T, R] {
 	p.callback = handler
+	return p
+}
+
+func (p *Put[T, R]) WithContext(ctx context.Context) PutInterface[T, R] {
+	p.Ctx = ctx
 	return p
 }
 
@@ -26,5 +36,5 @@ func (p *Put[T, R]) Run() error {
 		}
 	}
 
-	return p.send(raw)
+	return p.send(p.Ctx, raw)
 }

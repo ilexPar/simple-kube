@@ -1,5 +1,7 @@
 package core
 
+import "context"
+
 // ScopeAction is the entrypoint returned by a scope (e.g. Deployment(),
 // Namespace()) exposing the available actions for a resource.
 type ScopeAction[T any, R any] interface {
@@ -13,18 +15,22 @@ type ScopeAction[T any, R any] interface {
 type GetInterface[T any, R any] interface {
 	Run() (T, error)
 	DataHandler(func(*R) error) GetInterface[T, R]
+	WithContext(ctx context.Context) GetInterface[T, R]
 }
 
 type PutInterface[T any, R any] interface {
 	Run() error
 	DataHandler(func(*R) error) PutInterface[T, R]
+	WithContext(ctx context.Context) PutInterface[T, R]
 }
 
 type ListInterface[T any, R any] interface {
 	Run() ([]T, error)
 	FilterByLabels(labels map[string]string) ListInterface[T, R]
+	WithContext(ctx context.Context) ListInterface[T, R]
 }
 
 type DeleteInterface[T any, R any] interface {
 	Run() error
+	WithContext(ctx context.Context) DeleteInterface[T, R]
 }

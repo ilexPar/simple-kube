@@ -54,6 +54,24 @@ cronjobs, err := client.InNamespace("my-ns").
   Run()
 ```
 
+## Per-query context
+
+The context configured on the client (via `Config`) is used by default. To scope
+a single query with its own context (for example a per-request deadline or
+cancellation), chain `WithContext` before `Run`. It is available on every action
+in both scopes; if omitted, the client-configured context applies.
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+err := client.InNamespace("my-ns").
+  Deployment().
+  Create(dep).
+  WithContext(ctx).
+  Run()
+```
+
 # Advanced usage
 
 Objects are simplified for basic use cases. But you can have access to the

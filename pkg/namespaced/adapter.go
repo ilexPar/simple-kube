@@ -1,6 +1,8 @@
 package namespaced
 
 import (
+	"context"
+
 	"github.com/ilexPar/simple-kube/pkg/base"
 	"github.com/ilexPar/simple-kube/pkg/namespaced/resources"
 )
@@ -12,23 +14,28 @@ type nsBackend[R base.KubernetesResources] struct {
 	namespace string
 }
 
-func (b nsBackend[R]) Get(id string) (*R, error) {
+func (b nsBackend[R]) Get(ctx context.Context, id string) (*R, error) {
+	b.api.SetContext(ctx)
 	return b.api.Get(id, b.namespace)
 }
 
-func (b nsBackend[R]) Create(obj *R) error {
+func (b nsBackend[R]) Create(ctx context.Context, obj *R) error {
+	b.api.SetContext(ctx)
 	return b.api.Create(b.namespace, obj)
 }
 
-func (b nsBackend[R]) Update(obj *R) error {
+func (b nsBackend[R]) Update(ctx context.Context, obj *R) error {
+	b.api.SetContext(ctx)
 	return b.api.Update(b.namespace, obj)
 }
 
-func (b nsBackend[R]) Delete(id string) error {
+func (b nsBackend[R]) Delete(ctx context.Context, id string) error {
+	b.api.SetContext(ctx)
 	return b.api.Delete(id, b.namespace)
 }
 
-func (b nsBackend[R]) List(opts base.QueryOpts) ([]R, error) {
+func (b nsBackend[R]) List(ctx context.Context, opts base.QueryOpts) ([]R, error) {
+	b.api.SetContext(ctx)
 	b.api.SetOpts(opts)
 	return b.api.List(b.namespace)
 }

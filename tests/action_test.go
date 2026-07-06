@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -44,31 +45,37 @@ type fakeBackend struct {
 	updated   *fakeRaw
 	deletedID string
 	events    *[]string
+	gotCtx    context.Context
 }
 
-func (b *fakeBackend) Get(id string) (*fakeRaw, error) {
+func (b *fakeBackend) Get(ctx context.Context, id string) (*fakeRaw, error) {
+	b.gotCtx = ctx
 	b.record("get")
 	return b.getObj, b.getErr
 }
 
-func (b *fakeBackend) List(opts base.QueryOpts) ([]fakeRaw, error) {
+func (b *fakeBackend) List(ctx context.Context, opts base.QueryOpts) ([]fakeRaw, error) {
+	b.gotCtx = ctx
 	b.listOpts = opts
 	return b.listObjs, nil
 }
 
-func (b *fakeBackend) Create(obj *fakeRaw) error {
+func (b *fakeBackend) Create(ctx context.Context, obj *fakeRaw) error {
+	b.gotCtx = ctx
 	b.record("send")
 	b.created = obj
 	return nil
 }
 
-func (b *fakeBackend) Update(obj *fakeRaw) error {
+func (b *fakeBackend) Update(ctx context.Context, obj *fakeRaw) error {
+	b.gotCtx = ctx
 	b.record("send")
 	b.updated = obj
 	return nil
 }
 
-func (b *fakeBackend) Delete(id string) error {
+func (b *fakeBackend) Delete(ctx context.Context, id string) error {
+	b.gotCtx = ctx
 	b.deletedID = id
 	return nil
 }
@@ -186,4 +193,21 @@ func TestDelete(t *testing.T) {
 	err := newAction(fakeCodec{}, backend).Delete("obj").Run()
 	assert.NoError(t, err)
 	assert.Equal(t, "obj", backend.deletedID)
+}
+
+func TestWithContext(t *testing.T) {
+	t.Run("forwards the per-query context to the backend", func(t *testing.T) {
+		type ctxKey struct{}
+		ctx := context.WithValue(context.Background(), ctxKey{}, "scoped")
+		backend := &fakeBackend{getObj: &fakeRaw{Name: "obj"}}
+		_, err := newAction(fakeCodec{}, backend).Get("obj").WithContext(ctx).Run()
+		assert.NoError(t, err)
+		assert.Equal(t, ctx, backend.gotCtx)
+	})
+	t.Run("forwards a nil context when unset so the client default applies", func(t *testing.T) {
+		backend := &fakeBackend{getObj: &fakeRaw{Name: "obj"}}
+		_, err := newAction(fakeCodec{}, backend).Get("obj").Run()
+		assert.NoError(t, err)
+		assert.Nil(t, backend.gotCtx)
+	})
 }

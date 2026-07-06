@@ -11,6 +11,7 @@ import (
 type ClusterResourceAPI[R base.KubernetesResources] interface {
 	Config(ctx context.Context, k8s kubernetes.Interface)
 	SetOpts(opts base.QueryOpts)
+	SetContext(ctx context.Context)
 
 	Get(name string) (*R, error)
 	Create(obj *R) error
