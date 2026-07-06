@@ -67,7 +67,6 @@ func (cj *CronJobAPI[R]) Update(namespace string, obj *R) error {
 }
 
 func (cj *CronJobAPI[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := cj.Client.BatchV1().
 		CronJobs(namespace).
 		List(cj.Context, cj.Opts.List)
@@ -75,6 +74,7 @@ func (cj *CronJobAPI[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {

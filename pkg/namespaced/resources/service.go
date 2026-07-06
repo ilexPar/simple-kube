@@ -55,7 +55,6 @@ func (s *ServiceAPI[R]) Update(namespace string, obj *R) error {
 }
 
 func (s *ServiceAPI[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := s.Client.CoreV1().
 		Services(namespace).
 		List(s.Context, s.Opts.List)
@@ -63,10 +62,10 @@ func (s *ServiceAPI[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {
-
 			res = append(res, item)
 		}
 	}

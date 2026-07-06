@@ -54,7 +54,6 @@ func (cm *ConfigMapAPI[R]) Update(namespace string, obj *R) error {
 }
 
 func (cm *ConfigMapAPI[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := cm.Client.CoreV1().
 		ConfigMaps(namespace).
 		List(cm.Context, cm.Opts.List)
@@ -62,6 +61,7 @@ func (cm *ConfigMapAPI[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {

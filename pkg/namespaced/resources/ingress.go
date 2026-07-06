@@ -62,7 +62,6 @@ func (i *IngressAPI[R]) Update(namespace string, obj *R) error {
 }
 
 func (i *IngressAPI[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := i.Client.NetworkingV1().
 		Ingresses(namespace).
 		List(i.Context, i.Opts.List)
@@ -70,6 +69,7 @@ func (i *IngressAPI[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {

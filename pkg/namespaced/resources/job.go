@@ -64,7 +64,6 @@ func (j *JobAPI[R]) Update(namespace string, obj *R) error {
 }
 
 func (j *JobAPI[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := j.Client.BatchV1().
 		Jobs(namespace).
 		List(j.Context, j.Opts.List)
@@ -72,6 +71,7 @@ func (j *JobAPI[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {

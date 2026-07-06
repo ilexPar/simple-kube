@@ -58,7 +58,6 @@ func (d *DeploymentAPI[R]) Update(namespace string, obj *R) error {
 }
 
 func (d *DeploymentAPI[R]) List(namespace string) ([]R, error) {
-	res := []R{}
 	list, err := d.Client.AppsV1().
 		Deployments(namespace).
 		List(d.Context, d.Opts.List)
@@ -66,6 +65,7 @@ func (d *DeploymentAPI[R]) List(namespace string) ([]R, error) {
 		return nil, err
 	}
 
+	res := make([]R, 0, len(list.Items))
 	for _, v := range list.Items {
 		item, err := base.Cast[R](v)
 		if err == nil {
