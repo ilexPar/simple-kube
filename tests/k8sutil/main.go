@@ -16,9 +16,7 @@ import (
 	clienttesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 
-	skcl "github.com/ilexPar/simple-kube/pkg/cluster"
 	skclres "github.com/ilexPar/simple-kube/pkg/cluster/resources"
-	skns "github.com/ilexPar/simple-kube/pkg/namespaced"
 	sknsres "github.com/ilexPar/simple-kube/pkg/namespaced/resources"
 )
 
@@ -29,11 +27,10 @@ const (
 	Update
 )
 
-type k8sResources interface {
-	skns.NamespacedResources | skcl.ClusterResourcesConstrain
-}
-
-func WithInformedClient[T k8sResources](
+// WithInformedClient exercises code against a fake clientset wired to a
+// SharedInformer. T is the simplified resource type used to resolve the correct
+// informer (see resolveInformerByDef).
+func WithInformedClient[T any](
 	t *testing.T,
 	action informedActions,
 	exec func(client *fake.Clientset),
@@ -55,13 +52,13 @@ func WithInformedClient[T k8sResources](
 			switch action {
 			case Create:
 				informer.AddEventHandler(&cache.ResourceEventHandlerFuncs{
-					AddFunc: func(obj interface{}) {
+					AddFunc: func(obj any) {
 						kChan <- obj
 					},
 				})
 			case Update:
 				informer.AddEventHandler(&cache.ResourceEventHandlerFuncs{
-					UpdateFunc: func(oldObj, newObj interface{}) {
+					UpdateFunc: func(oldObj, newObj any) {
 						assert.NotEqualf(
 							t,
 							newObj,
@@ -140,7 +137,7 @@ func fakeClientWithInformer(
 
 // resolveInformerByDef returns the SharedInformer for the given definition.
 // It panics if no case is provided for the definition type.
-func resolveInformerByDef(def interface{}, i informers.SharedInformerFactory) cache.SharedInformer {
+func resolveInformerByDef(def any, i informers.SharedInformerFactory) cache.SharedInformer {
 	switch def.(type) {
 	case sknsres.Deployment:
 		return i.Apps().V1().Deployments().Informer()

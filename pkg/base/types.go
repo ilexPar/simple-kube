@@ -13,12 +13,7 @@ type QueryOpts struct {
 	List metav1.ListOptions
 }
 
-type ResourceInterface interface {
-	Load(from, into interface{}) error
-	Dump(from interface{}) (interface{}, error)
-}
-
 type KubernetesResources interface {
 	apps.Deployment | api.ConfigMap | api.Service | batch.Job | batch.CronJob |
-		net.Ingress | scaling.HorizontalPodAutoscaler
+		net.Ingress | scaling.HorizontalPodAutoscaler | api.Namespace
 }
