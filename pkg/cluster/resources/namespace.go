@@ -1,7 +1,6 @@
 package resources
 
 import (
-	sm "github.com/ilexPar/struct-marshal/pkg"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -13,32 +12,21 @@ type Namespace struct {
 	Labels map[string]string `sm:"metadata.labels"`
 }
 
-func (n Namespace) API() ClusterResourceAPI {
-	return &NamespaceAPI{}
-}
-
-func (n Namespace) Dump(from interface{}) (interface{}, error) {
-	res := &api.Namespace{}
-	err := sm.Marshal(from, res)
-	return res, err
-}
-
-func (n Namespace) Load(from, into interface{}) error {
-	return sm.Unmarshal(from, into)
-}
-
-type NamespaceAPI struct {
+type NamespaceAPI[R base.KubernetesResources] struct {
 	base.KubeAPI
 }
 
-func (n *NamespaceAPI) Get(name string) (interface{}, error) {
+func (n *NamespaceAPI[R]) Get(name string) (*R, error) {
 	res, err := n.Client.CoreV1().
 		Namespaces().
 		Get(n.Context, name, metav1.GetOptions{})
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+	return base.Cast[*R](res)
 }
 
-func (n *NamespaceAPI) Create(obj interface{}) error {
+func (n *NamespaceAPI[R]) Create(obj *R) error {
 	res, err := base.Cast[*api.Namespace](obj)
 	if err != nil {
 		return err
@@ -49,7 +37,7 @@ func (n *NamespaceAPI) Create(obj interface{}) error {
 	return err
 }
 
-func (n *NamespaceAPI) Update(obj interface{}) error {
+func (n *NamespaceAPI[R]) Update(obj *R) error {
 	res, err := base.Cast[*api.Namespace](obj)
 	if err != nil {
 		return err
@@ -60,18 +48,26 @@ func (n *NamespaceAPI) Update(obj interface{}) error {
 	return err
 }
 
-func (n *NamespaceAPI) List() ([]interface{}, error) {
-	var res []interface{}
+func (n *NamespaceAPI[R]) List() ([]R, error) {
 	list, err := n.Client.CoreV1().
 		Namespaces().
 		List(n.Context, n.Opts.List)
-	for _, v := range list.Items {
-		res = append(res, v)
+	if err != nil {
+		return nil, err
 	}
-	return res, err
+
+	res := make([]R, 0, len(list.Items))
+	for i := range list.Items {
+		item, err := base.Cast[R](list.Items[i])
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, item)
+	}
+	return res, nil
 }
 
-func (n *NamespaceAPI) Delete(name string) error {
+func (n *NamespaceAPI[R]) Delete(name string) error {
 	return n.Client.CoreV1().
 		Namespaces().
 		Delete(n.Context, name, metav1.DeleteOptions{})
