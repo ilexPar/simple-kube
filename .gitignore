@@ -23,3 +23,6 @@ go.work.sum
 
 # analysis files
 analysis-report.html
+
+QWEN.md
+CLAUDE.md
